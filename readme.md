@@ -39,10 +39,10 @@ The system creates an intelligent feedback loop where:
 ### New Refactored Version
 ```bash
 # Run with default RTSP URL
-python main.py
+uv run main.py
 
 # Run with custom camera URL
-python main.py --url "rtsp://your-camera-url" --window-name "My Camera"
+uv run main.py --url "rtsp://your-camera-url" --window-name "My Camera"
 ```
 
 ### Project Structure
