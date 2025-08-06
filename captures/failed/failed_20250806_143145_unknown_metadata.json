@@ -1,0 +1,30 @@
+{
+  "timestamp": "2025-08-06T14:31:45.998305",
+  "filepath": "captures/failed/failed_20250806_143145_unknown.jpg",
+  "recognition": {
+    "label": "unknown",
+    "confidence": 0.0,
+    "is_known": false,
+    "all_scores": {}
+  },
+  "yolo_detections": [
+    {
+      "class_name": "banana",
+      "confidence": 0.6259424686431885,
+      "bbox": [
+        2,
+        790,
+        1167,
+        288
+      ]
+    }
+  ],
+  "stats": {
+    "frames_processed": 21,
+    "triggers_fired": 1,
+    "successful_recognitions": 0,
+    "failed_recognitions": 1,
+    "gemini_queries": 1,
+    "knn_updates": 1
+  }
+}

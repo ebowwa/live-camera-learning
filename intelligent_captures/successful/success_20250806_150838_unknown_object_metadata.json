@@ -1,0 +1,46 @@
+{
+  "timestamp": "2025-08-06T15:08:38.242398",
+  "filepath": "intelligent_captures/successful/success_20250806_150838_unknown_object.jpg",
+  "recognition": {
+    "label": "unknown_object",
+    "confidence": 0.6666666666666666,
+    "is_known": true,
+    "all_scores": {
+      "apple": 0.0,
+      "banana": 0.0,
+      "cat": 0.3333333333333333,
+      "test_banana": 0.0,
+      "unknown_object": 0.6666666666666666
+    }
+  },
+  "yolo_detections": [
+    {
+      "class_name": "cell phone",
+      "confidence": 0.7736719250679016,
+      "bbox": [
+        294,
+        595,
+        230,
+        124
+      ]
+    },
+    {
+      "class_name": "bottle",
+      "confidence": 0.6929010152816772,
+      "bbox": [
+        1028,
+        521,
+        186,
+        198
+      ]
+    }
+  ],
+  "stats": {
+    "frames_processed": 3074,
+    "triggers_fired": 17,
+    "successful_recognitions": 17,
+    "failed_recognitions": 0,
+    "gemini_queries": 0,
+    "knn_updates": 0
+  }
+}

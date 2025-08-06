@@ -2,17 +2,20 @@
 
 import argparse
 import sys
+import os
+import time
 import logging
 from src.rtsp_stream import RTSPStream, RTSPViewer
 from src.integrated_detector import IntegratedDetector, HandObjectTrigger
+from src.intelligent_capture import IntelligentCaptureSystem
 
-# Optional import for hand detection (requires mediapipe)
+# Import hand detection (should work with Python 3.11)
 try:
     from src.hand_stream_viewer import HandStreamViewer, demo_gesture_handler
     HAND_DETECTION_AVAILABLE = True
-except ImportError:
+except ImportError as e:
     HAND_DETECTION_AVAILABLE = False
-    print("Note: Hand detection mode unavailable (mediapipe not compatible with Python 3.13)")
+    print(f"Warning: Hand detection import failed: {e}")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -54,6 +57,78 @@ def run_detection_mode(args):
         detector.run(display=not args.headless, window_name=args.window_name)
     except KeyboardInterrupt:
         print("\nDetection interrupted by user")
+        sys.exit(0)
+    except Exception as e:
+        print(f"Error: {e}")
+        sys.exit(1)
+
+
+def run_intelligent_mode(args):
+    """Run the full intelligent capture pipeline with KNN and annotation interface."""
+    import threading
+    from src.annotation_interface import create_annotation_app
+    
+    # Start annotation interface in background thread if not disabled
+    if not args.no_annotation:
+        def run_annotation():
+            try:
+                print(f"Starting annotation interface at http://localhost:{args.annotation_port}")
+                app = create_annotation_app("models/knn_classifier.pkl")
+                app.launch(
+                    share=False,
+                    port=args.annotation_port,
+                    prevent_thread_lock=True
+                )
+            except Exception as e:
+                print(f"Annotation interface error: {e}")
+        
+        annotation_thread = threading.Thread(target=run_annotation, daemon=True)
+        annotation_thread.start()
+        time.sleep(2)  # Let annotation interface start
+    
+    # Run capture system
+    system = IntelligentCaptureSystem(
+        rtsp_url=args.url,
+        yolo_model_path=args.model_path,
+        capture_dir=args.capture_dir,
+        confidence_threshold=args.conf_threshold
+    )
+    
+    # Load training samples if available
+    training_dir = args.training_dir
+    if training_dir and os.path.exists(training_dir):
+        print(f"Loading training samples from {training_dir}")
+        system.knn.add_samples_from_directory(training_dir)
+    
+    try:
+        print("\n" + "="*60)
+        print("🎯 EdaxShifu Intelligent Capture System")
+        print("="*60)
+        print(f"\n📹 Source: {args.url}")
+        
+        if not args.no_annotation:
+            print(f"🌐 Annotation: http://localhost:{args.annotation_port}")
+        
+        print("\n🎮 Controls:")
+        print("  's' - Manual capture")
+        print("  'r' - Reset KNN classifier")
+        print("  'i' - Show statistics")
+        print("  'l' - Reload model (get new annotations)")
+        print("  ESC - Exit")
+        
+        print("\n🔄 Live Learning Active:")
+        print("  • Unknown objects → captures/failed/")
+        print("  • Annotate in browser → Model updates")
+        print("  • System learns in real-time")
+        print("="*60 + "\n")
+        
+        system.run(display=not args.headless)
+    except KeyboardInterrupt:
+        print("\n\nShutting down...")
+        print(f"Stats:")
+        print(f"  Successful: {system.stats['successful_recognitions']}")
+        print(f"  Failed: {system.stats['failed_recognitions']}")
+        print(f"  Total: {system.stats['captures']}")
         sys.exit(0)
     except Exception as e:
         print(f"Error: {e}")
@@ -116,9 +191,9 @@ def main():
     parser.add_argument(
         '--mode',
         type=str,
-        choices=['stream', 'detect', 'hand'],
+        choices=['stream', 'detect', 'hand', 'intelligent'],
         default='stream',
-        help='Operation mode: stream (basic), detect (YOLO), or hand (hand detection)'
+        help='Operation mode: stream (basic), detect (YOLO), hand (hand detection), or intelligent (full pipeline)'
     )
     
     # Detection mode arguments
@@ -171,6 +246,27 @@ def main():
         help='Disable statistics overlay in hand mode'
     )
     
+    # Intelligent mode arguments
+    parser.add_argument(
+        '--training-dir',
+        type=str,
+        default='assets/images',
+        help='Directory with training images for KNN (default: assets/images)'
+    )
+    
+    parser.add_argument(
+        '--no-annotation',
+        action='store_true',
+        help='Disable the annotation interface'
+    )
+    
+    parser.add_argument(
+        '--annotation-port',
+        type=int,
+        default=7860,
+        help='Port for annotation interface (default: 7860)'
+    )
+    
     args = parser.parse_args()
     
     # Run appropriate mode
@@ -186,6 +282,12 @@ def main():
         print("Gestures: open_palm, fist, peace, pointing, thumbs_up, pinch")
         print("Press 's' to save snapshot, 'r' to reset detector, ESC to quit")
         run_hand_detection_mode(args)
+    elif args.mode == 'intelligent':
+        print(f"Starting intelligent capture mode with KNN...")
+        print(f"YOLO Model: {args.model_path}")
+        print(f"Training directory: {args.training_dir}")
+        print(f"Captures will be saved to: {args.capture_dir}")
+        run_intelligent_mode(args)
     else:
         print(f"Starting basic streaming mode...")
         run_basic_stream(args)

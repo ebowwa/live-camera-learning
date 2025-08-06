@@ -1,0 +1,36 @@
+{
+  "timestamp": "2025-08-06T15:12:39.330373",
+  "filepath": "intelligent_captures/successful/success_20250806_151239_cat.jpg",
+  "recognition": {
+    "label": "cat",
+    "confidence": 0.6666666666666666,
+    "is_known": true,
+    "all_scores": {
+      "apple": 0.0,
+      "banana": 0.0,
+      "cat": 0.6666666666666666,
+      "test_banana": 0.0,
+      "unknown_object": 0.3333333333333333
+    }
+  },
+  "yolo_detections": [
+    {
+      "class_name": "cell phone",
+      "confidence": 0.6834548115730286,
+      "bbox": [
+        591,
+        660,
+        173,
+        59
+      ]
+    }
+  ],
+  "stats": {
+    "frames_processed": 4273,
+    "triggers_fired": 19,
+    "successful_recognitions": 19,
+    "failed_recognitions": 0,
+    "gemini_queries": 0,
+    "knn_updates": 0
+  }
+}

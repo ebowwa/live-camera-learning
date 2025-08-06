@@ -5,7 +5,6 @@ from PIL import Image
 from sklearn.neighbors import KNeighborsClassifier
 import numpy as np
 import os
-
 import pickle
 
 

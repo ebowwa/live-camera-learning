@@ -17,4 +17,5 @@ dependencies = [
     "edge-tts>=6.1.0",
     "scipy>=1.10.0",
     "mediapipe>=0.10.0",
+    "gradio>=4.0.0",
 ]

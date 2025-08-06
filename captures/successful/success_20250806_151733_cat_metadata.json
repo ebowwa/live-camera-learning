@@ -1,0 +1,36 @@
+{
+  "timestamp": "2025-08-06T15:17:33.847607",
+  "filepath": "captures/successful/success_20250806_151733_cat.jpg",
+  "recognition": {
+    "label": "cat",
+    "confidence": 0.6666666666666666,
+    "is_known": true,
+    "all_scores": {
+      "apple": 0.0,
+      "banana": 0.0,
+      "cat": 0.6666666666666666,
+      "test_banana": 0.0,
+      "unknown_object": 0.3333333333333333
+    }
+  },
+  "yolo_detections": [
+    {
+      "class_name": "banana",
+      "confidence": 0.9174041748046875,
+      "bbox": [
+        833,
+        2,
+        446,
+        476
+      ]
+    }
+  ],
+  "stats": {
+    "frames_processed": 332,
+    "triggers_fired": 2,
+    "successful_recognitions": 2,
+    "failed_recognitions": 0,
+    "gemini_queries": 0,
+    "knn_updates": 0
+  }
+}

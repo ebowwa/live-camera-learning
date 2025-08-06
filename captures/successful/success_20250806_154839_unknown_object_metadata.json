@@ -1,0 +1,56 @@
+{
+  "timestamp": "2025-08-06T15:48:39.199410",
+  "filepath": "captures/successful/success_20250806_154839_unknown_object.jpg",
+  "recognition": {
+    "label": "unknown_object",
+    "confidence": 0.6666666666666666,
+    "is_known": true,
+    "all_scores": {
+      "apple": 0.0,
+      "banana": 0.0,
+      "cat": 0.3333333333333333,
+      "test_banana": 0.0,
+      "unknown_object": 0.6666666666666666
+    }
+  },
+  "yolo_detections": [
+    {
+      "class_name": "bottle",
+      "confidence": 0.8749916553497314,
+      "bbox": [
+        260,
+        654,
+        392,
+        423
+      ]
+    },
+    {
+      "class_name": "bottle",
+      "confidence": 0.8190867900848389,
+      "bbox": [
+        983,
+        790,
+        149,
+        289
+      ]
+    },
+    {
+      "class_name": "bottle",
+      "confidence": 0.6554917097091675,
+      "bbox": [
+        1286,
+        755,
+        181,
+        324
+      ]
+    }
+  ],
+  "stats": {
+    "frames_processed": 837,
+    "triggers_fired": 34,
+    "successful_recognitions": 34,
+    "failed_recognitions": 0,
+    "gemini_queries": 0,
+    "knn_updates": 0
+  }
+}

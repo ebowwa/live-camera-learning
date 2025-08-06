@@ -1,0 +1,86 @@
+{
+  "timestamp": "2025-08-06T14:35:56.163615",
+  "filepath": "captures/successful/success_20250806_143556_unknown_object.jpg",
+  "recognition": {
+    "label": "unknown_object",
+    "confidence": 0.6666666666666666,
+    "is_known": true,
+    "all_scores": {
+      "apple": 0.0,
+      "banana": 0.0,
+      "cat": 0.3333333333333333,
+      "test_banana": 0.0,
+      "unknown_object": 0.6666666666666666
+    }
+  },
+  "yolo_detections": [
+    {
+      "class_name": "banana",
+      "confidence": 0.9294317960739136,
+      "bbox": [
+        778,
+        697,
+        810,
+        378
+      ]
+    },
+    {
+      "class_name": "bottle",
+      "confidence": 0.8172248601913452,
+      "bbox": [
+        881,
+        35,
+        172,
+        445
+      ]
+    },
+    {
+      "class_name": "cup",
+      "confidence": 0.6974952816963196,
+      "bbox": [
+        1804,
+        1,
+        114,
+        211
+      ]
+    },
+    {
+      "class_name": "bottle",
+      "confidence": 0.5982837677001953,
+      "bbox": [
+        770,
+        428,
+        234,
+        438
+      ]
+    },
+    {
+      "class_name": "bottle",
+      "confidence": 0.5957284569740295,
+      "bbox": [
+        1268,
+        78,
+        168,
+        370
+      ]
+    },
+    {
+      "class_name": "cell phone",
+      "confidence": 0.5598501563072205,
+      "bbox": [
+        1768,
+        252,
+        113,
+        107
+      ]
+    }
+  ],
+  "stats": {
+    "frames_processed": 37,
+    "triggers_fired": 2,
+    "successful_recognitions": 2,
+    "failed_recognitions": 0,
+    "gemini_queries": 0,
+    "knn_updates": 0
+  }
+}

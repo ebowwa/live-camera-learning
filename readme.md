@@ -36,13 +36,40 @@ The system creates an intelligent feedback loop where:
 
 ## 🚀 Quick Start
 
-### New Refactored Version
+### Complete System with RTSP
 ```bash
-# Run with default RTSP URL
-uv run main.py
+# Run the full intelligent system with RTSP stream
+uv run python run_rtsp.py
 
-# Run with custom camera URL
-uv run main.py --url "rtsp://your-camera-url" --window-name "My Camera"
+# Use webcam instead of RTSP
+uv run python run_rtsp.py --webcam
+
+# Use custom RTSP URL
+uv run python run_rtsp.py --url "rtsp://your-camera-url"
+
+# Run headless (no display window)
+uv run python run_rtsp.py --headless
+```
+
+### Individual Components
+```bash
+# Run intelligent capture with RTSP
+uv run main.py --mode intelligent --url "rtsp://admin:admin@192.168.42.1:554/live"
+
+# Run with webcam
+uv run main.py --mode intelligent --url 0
+
+# Run annotation interface separately
+uv run annotate.py
+```
+
+### Run Both Components Together
+```bash
+# Using the launcher script
+./run_with_annotation.sh
+
+# With custom RTSP URL
+./run_with_annotation.sh "rtsp://your-camera-url"
 ```
 
 ### Project Structure
@@ -136,12 +163,39 @@ Template for fine-tuning YOLO models with Ultralytics
 
 ## 📊 Data Pipeline
 
-1. **Capture**: RTSP stream from reCamera
-2. **Detection**: YOLO identifies hands/objects
-3. **Classification**: KNN attempts recognition
-4. **Annotation**: Gemini provides labels on failure
-5. **Training**: Real-time model updates
-6. **Storage**: Labeled dataset accumulation
+### RTSP Integration Workflow
+1. **RTSP Stream Input**: 
+   - Connects to reCamera via `rtsp://admin:admin@192.168.42.1:554/live`
+   - Falls back to webcam if RTSP unavailable
+   - Handles reconnection automatically
+
+2. **Real-time Detection**:
+   - YOLO v11 processes each frame from RTSP stream
+   - Identifies hands and objects in real-time
+   - Triggers capture based on detection confidence
+
+3. **Intelligent Classification**:
+   - KNN classifier with ResNet18 embeddings
+   - Attempts to recognize captured objects
+   - Routes to success/failure paths based on confidence
+
+4. **Human-in-the-Loop Annotation**:
+   - Failed recognitions saved to `captures/failed/`
+   - Gradio interface at http://localhost:7860
+   - Human labels update KNN in real-time
+
+5. **Continuous Learning**:
+   - Each annotation improves the model
+   - Dataset grows in `captures/dataset/`
+   - Model saves automatically after updates
+
+### Directory Structure
+```
+captures/
+├── successful/    # Recognized objects
+├── failed/        # Unknown objects for annotation
+└── dataset/       # Growing labeled dataset
+```
 
 ## 🎯 Use Cases
 
