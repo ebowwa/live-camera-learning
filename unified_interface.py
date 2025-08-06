@@ -329,16 +329,10 @@ class UnifiedEdaxShifu:
                 outputs=[captured_img, capture_status]
             )
             
-            annotate_btn.click(
-                self.annotate_capture,
-                inputs=[annotate_label],
-                outputs=[annotate_status]
-            ).then(
-                lambda: self.get_stats(),
-                outputs=[stats_display]
-            ).then(
-                lambda: "",  # Clear the label input
-                outputs=[annotate_label]
+            # Use last capture button - loads captured image into teach interface
+            use_capture_btn.click(
+                lambda: self.last_capture if self.last_capture is not None else None,
+                outputs=[teach_img]
             )
             
             teach_btn.click(
