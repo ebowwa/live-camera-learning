@@ -1,0 +1,85 @@
+[
+    {
+        "id": "50e3ab80be055d8f",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "12d079b1a1484105",
+        "type": "camera",
+        "z": "50e3ab80be055d8f",
+        "option": 0,
+        "light": false,
+        "client": "19b876ae6bf3e681",
+        "x": 330,
+        "y": 880,
+        "wires": [
+            [
+                "59b2d8ca2cc78c0c",
+                "d358c0123644ca7c"
+            ]
+        ]
+    },
+    {
+        "id": "59b2d8ca2cc78c0c",
+        "type": "model",
+        "z": "50e3ab80be055d8f",
+        "name": "",
+        "uri": "",
+        "model": "yolo11n_cv181x_int8.cvimodel",
+        "tscore": 0.45,
+        "tiou": 0.25,
+        "debug": false,
+        "trace": false,
+        "counting": false,
+        "classes": "person,bicycle,car,motorcycle,airplane,bus,train,truck,boat,traffic light,fire hydrant,stop sign,parking meter,bench,bird,cat,dog,horse,sheep,cow,elephant,bear,zebra,giraffe,backpack,umbrella,handbag,tie,suitcase,frisbee,skis,snowboard,sports ball,kite,baseball bat,baseball glove,skateboard,surfboard,tennis racket,bottle,wine glass,cup,fork,knife,spoon,bowl,banana,apple,sandwich,orange,broccoli,carrot,hot dog,pizza,donut,cake,chair,couch,potted plant,bed,dining table,toilet,tv,laptop,mouse,remote,keyboard,cell phone,microwave,oven,toaster,sink,refrigerator,book,clock,vase,scissors,teddy bear,hair drier,toothbrush",
+        "splitter": "0,0,0,0",
+        "client": "19b876ae6bf3e681",
+        "x": 510,
+        "y": 800,
+        "wires": [
+            [
+                "535e01dc2b6aebb8"
+            ]
+        ]
+    },
+    {
+        "id": "d358c0123644ca7c",
+        "type": "stream",
+        "z": "50e3ab80be055d8f",
+        "name": "stream",
+        "protocol": 0,
+        "port": 554,
+        "session": "live",
+        "username": "admin",
+        "password": "admin",
+        "client": "19b876ae6bf3e681",
+        "x": 510,
+        "y": 920,
+        "wires": []
+    },
+    {
+        "id": "535e01dc2b6aebb8",
+        "type": "preview",
+        "z": "50e3ab80be055d8f",
+        "name": "",
+        "active": false,
+        "pass": false,
+        "outputs": 0,
+        "x": 660,
+        "y": 800,
+        "wires": []
+    },
+    {
+        "id": "19b876ae6bf3e681",
+        "type": "sscma",
+        "host": "localhost",
+        "port": "1883",
+        "clientid": "recamera",
+        "username": "",
+        "password": ""
+    }
+]
