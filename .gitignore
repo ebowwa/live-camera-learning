@@ -6,7 +6,60 @@
 # Thumbnails
 ._*
 
-.pyc
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+*.cover
+.hypothesis/
+
+# Backup files
+*.backup
+*.bak
+*~
+
+# Media files
+*.mp3
+*.wav
+*.mp4
+*.avi
+*.mov
+
+# Images (if you want to keep some, be selective)
+assets/snapshots/
+captures/
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.svg
+*.pdf
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+.venv
+env/
+venv/
+ENV/
+
 # Files that might appear in the root of a volume
 .DocumentRevisions-V100
 .fseventsd
