@@ -205,37 +205,38 @@ class HandDetector:
         height, width = image.shape[:2]
         annotated_image = image.copy()
         
-        # Convert landmarks to MediaPipe format for drawing
-        mp_landmarks = self.mp_hands.HandLandmark
-        landmark_list = []
-        for lm in detection.landmarks:
-            landmark_list.append(
-                type('obj', (object,), {
-                    'x': lm.x,
-                    'y': lm.y,
-                    'z': lm.z,
-                    'visibility': lm.visibility
-                })()
-            )
-        
-        hand_landmarks = type('obj', (object,), {'landmark': landmark_list})()
-        
-        if draw_connections:
-            self.mp_drawing.draw_landmarks(
-                annotated_image,
-                hand_landmarks,
-                self.mp_hands.HAND_CONNECTIONS,
-                landmark_drawing_spec=self.mp_drawing.DrawingSpec(
-                    color=landmark_color, thickness=2, circle_radius=2
-                ) if draw_landmarks else None,
-                connection_drawing_spec=self.mp_drawing.DrawingSpec(
-                    color=connection_color, thickness=2
-                )
-            )
-        elif draw_landmarks:
-            for lm in detection.landmarks:
-                x, y = lm.to_pixel_coords(width, height)
-                cv2.circle(annotated_image, (x, y), 5, landmark_color, -1)
+        # Draw connections and landmarks manually to avoid MediaPipe object issues
+        if draw_connections or draw_landmarks:
+            # Define hand connections (MediaPipe hand connections)
+            connections = [
+                (0, 1), (1, 2), (2, 3), (3, 4),  # Thumb
+                (0, 5), (5, 6), (6, 7), (7, 8),  # Index finger
+                (5, 9), (9, 10), (10, 11), (11, 12),  # Middle finger
+                (9, 13), (13, 14), (14, 15), (15, 16),  # Ring finger
+                (13, 17), (17, 18), (18, 19), (19, 20),  # Pinky
+                (0, 17)  # Palm connection
+            ]
+            
+            # Draw connections
+            if draw_connections:
+                for connection in connections:
+                    start_idx, end_idx = connection
+                    if start_idx < len(detection.landmarks) and end_idx < len(detection.landmarks):
+                        start_lm = detection.landmarks[start_idx]
+                        end_lm = detection.landmarks[end_idx]
+                        
+                        start_x, start_y = start_lm.to_pixel_coords(width, height)
+                        end_x, end_y = end_lm.to_pixel_coords(width, height)
+                        
+                        cv2.line(annotated_image, (start_x, start_y), (end_x, end_y), 
+                                connection_color, 2)
+            
+            # Draw landmarks
+            if draw_landmarks:
+                for lm in detection.landmarks:
+                    x, y = lm.to_pixel_coords(width, height)
+                    cv2.circle(annotated_image, (x, y), 4, landmark_color, -1)
+                    cv2.circle(annotated_image, (x, y), 4, (255, 255, 255), 1)
         
         if draw_bounding_box and detection.bounding_box:
             x, y, w, h = detection.bounding_box
