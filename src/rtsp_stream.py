@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 import time
 from typing import Optional, Tuple
 import logging
@@ -9,7 +10,11 @@ logger = logging.getLogger(__name__)
 
 class RTSPStream:
     def __init__(self, rtsp_url: str):
-        self.rtsp_url = rtsp_url
+        # Handle webcam index (e.g., "0" for webcam)
+        try:
+            self.rtsp_url = int(rtsp_url)
+        except (ValueError, TypeError):
+            self.rtsp_url = rtsp_url
         self.cap: Optional[cv2.VideoCapture] = None
         self.fps_reported = 0.0
         self.width = 0
@@ -29,7 +34,7 @@ class RTSPStream:
         logger.info(f"Stream opened: {self.width}×{self.height} @ {self.fps_reported:.2f} FPS")
         return True
         
-    def read_frame(self) -> Tuple[bool, Optional]:
+    def read_frame(self) -> Tuple[bool, Optional[np.ndarray]]:
         if not self.cap:
             return False, None
         return self.cap.read()

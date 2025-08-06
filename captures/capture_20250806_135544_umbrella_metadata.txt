@@ -1,0 +1,5 @@
+Timestamp: 20250806_135544
+Detections:
+  - umbrella: 0.502
+    BBox: [279, 487, 359, 151]
+    Holding: True

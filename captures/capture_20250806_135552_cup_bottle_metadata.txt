@@ -1,0 +1,8 @@
+Timestamp: 20250806_135552
+Detections:
+  - cup: 0.626
+    BBox: [515, 612, 57, 27]
+    Holding: True
+  - bottle: 0.503
+    BBox: [560, 449, 33, 125]
+    Holding: True
