@@ -109,7 +109,7 @@ class UnifiedEdaxShifu:
         self.stats['captures'] += 1
         
         # Run KNN classification on the captured frame
-        recognition = self.system.knn.classify(self.last_capture)
+        recognition = self.system.knn.predict(self.last_capture)
         
         # Save to captures directory based on recognition
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -231,41 +231,33 @@ class UnifiedEdaxShifu:
                         interactive=False
                     )
                 
-                # Right side - Annotation and teaching
+                # Right side - Teaching
                 with gr.Column(scale=1):
-                    gr.Markdown("### 🏷️ Annotate & Teach")
+                    gr.Markdown("### 🏷️ Teach Objects")
                     
-                    # Annotation for captured images
+                    # Single teaching interface
                     with gr.Group():
-                        gr.Markdown("**Annotate Capture:**")
-                        annotate_label = gr.Textbox(
-                            label="Label for captured object",
-                            placeholder="e.g., apple, phone, cup"
-                        )
-                        annotate_btn = gr.Button("✅ Annotate Capture", variant="primary")
-                        annotate_status = gr.Textbox(
-                            label="Annotation Status",
-                            interactive=False
-                        )
-                    
-                    gr.Markdown("---")
-                    
-                    # Teaching new objects
-                    with gr.Group():
-                        gr.Markdown("**Teach New Object:**")
+                        gr.Markdown("**Teach from capture or upload:**")
+                        
+                        # Image source - either last capture or upload
                         teach_img = gr.Image(
-                            label="Upload image to teach",
+                            label="Image to teach (upload or use last capture)",
                             sources=["upload", "clipboard"],
                             type="pil",
                             height=200
                         )
+                        
                         teach_label = gr.Textbox(
                             label="Object name",
-                            placeholder="e.g., banana, laptop"
+                            placeholder="e.g., apple, phone, cup, banana"
                         )
-                        teach_btn = gr.Button("📚 Teach", variant="primary")
+                        
+                        with gr.Row():
+                            use_capture_btn = gr.Button("📸 Use Last Capture", variant="secondary")
+                            teach_btn = gr.Button("✅ Teach", variant="primary")
+                        
                         teach_status = gr.Textbox(
-                            label="Teaching Status",
+                            label="Status",
                             interactive=False
                         )
                     

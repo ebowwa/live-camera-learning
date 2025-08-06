@@ -60,6 +60,23 @@ env/
 venv/
 ENV/
 
+# Model files
+*.pkl
+*.pth
+*.pt
+*.h5
+*.hdf5
+*.onnx
+*.pb
+*.tflite
+*.safetensors
+*.ckpt
+*.bin
+*.model
+*.weights
+models/
+assets/*.onnx
+
 # Files that might appear in the root of a volume
 .DocumentRevisions-V100
 .fseventsd
