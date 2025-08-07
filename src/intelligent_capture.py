@@ -48,7 +48,7 @@ class IntelligentCaptureSystem:
         """
         # Initialize components
         self.stream = RTSPStream(rtsp_url)
-        self.yolo = YOLODetector(yolo_model_path)
+        self.yolo = YOLODetector(yolo_model_path, conf_threshold=0.3)  # Lower threshold for better detection
         self.knn = AdaptiveKNNClassifier(
             confidence_threshold=confidence_threshold,
             model_path=knn_model_path
