@@ -90,13 +90,19 @@ def run_intelligent_mode(args):
             try:
                 print(f"Starting annotation interface at http://localhost:{args.annotation_port}")
                 app = create_annotation_app("models/knn_classifier.pkl")
-                app.launch(
+                result = app.launch(
                     share=False,
                     port=args.annotation_port,
                     prevent_thread_lock=True
                 )
+                if result and hasattr(result, 'server_port'):
+                    actual_port = result.server_port
+                    print(f"🌐 Annotation interface available at http://localhost:{actual_port}")
+                elif result and hasattr(result, 'local_url'):
+                    print(f"🌐 Annotation interface available at {result.local_url}")
             except Exception as e:
-                print(f"Annotation interface error: {e}")
+                print(f"❌ Annotation interface error: {e}")
+                print("Continuing without annotation interface...")
         
         annotation_thread = threading.Thread(target=run_annotation, daemon=True)
         annotation_thread.start()

@@ -20,6 +20,9 @@ import numpy as np
 
 from .knn_classifier import AdaptiveKNNClassifier
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Import new annotator system
 try:
     from .annotators import (
@@ -30,9 +33,6 @@ try:
 except ImportError:
     ANNOTATORS_AVAILABLE = False
     logger.warning("New annotator system not available, using legacy human-only mode")
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -45,7 +45,7 @@ class AnnotationTask:
     yolo_detections: List[str]
     knn_prediction: Optional[str] = None
     knn_confidence: Optional[float] = None
-    ai_annotation: Optional[AnnotationResult] = None
+    ai_annotation: Optional[Any] = None  # AnnotationResult when available
     human_annotation: Optional[str] = None
     final_label: Optional[str] = None
     annotation_source: Optional[str] = None
@@ -745,13 +745,23 @@ class HumanAnnotationInterface:
     def launch(self, share: bool = False, port: int = 7860, prevent_thread_lock: bool = False):
         """Launch the Gradio interface."""
         logger.info(f"Launching annotation interface on port {port}")
-        return self.interface.launch(
-            share=share, 
-            server_port=port, 
-            server_name="0.0.0.0",
-            prevent_thread_lock=prevent_thread_lock,
-            quiet=True
-        )
+        
+        # Try multiple ports if the requested one is in use
+        for attempt_port in range(port, port + 10):
+            try:
+                return self.interface.launch(
+                    share=share, 
+                    server_port=attempt_port, 
+                    server_name="0.0.0.0",
+                    prevent_thread_lock=prevent_thread_lock,
+                    quiet=True
+                )
+            except OSError as e:
+                if "address already in use" in str(e).lower() and attempt_port < port + 9:
+                    logger.info(f"Port {attempt_port} in use, trying {attempt_port + 1}")
+                    continue
+                else:
+                    raise e
 
 
 def create_annotation_app(knn_model_path: str = "models/knn_classifier.pkl", 

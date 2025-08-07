@@ -84,7 +84,7 @@ class KNNObjectClassifier:
     def _setup_feature_extractor(self):
         """Setup ResNet18 for feature extraction."""
         # Load pretrained ResNet18
-        self.feature_extractor = resnet18(pretrained=True)
+        self.feature_extractor = resnet18(weights='IMAGENET1K_V1')
         # Remove the final classification layer
         self.feature_extractor = torch.nn.Sequential(
             *list(self.feature_extractor.children())[:-1]
