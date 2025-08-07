@@ -15,12 +15,13 @@ class KNNOnlineClassifier(KNNObjectClassifier):
     """KNN classifier with online learning capabilities."""
     
     def __init__(self, 
-                 n_neighbors: int = 1,
+                 n_neighbors: int = 3,
                  confidence_threshold: float = 0.6,
                  model_path: Optional[str] = None,
                  device: Optional[str] = None,
                  auto_save: bool = False,
-                 batch_retrain_interval: int = 10):
+                 batch_retrain_interval: int = 5,
+                 max_samples_per_class: int = 100):
         """
         Initialize online learning KNN classifier.
         
@@ -31,25 +32,25 @@ class KNNOnlineClassifier(KNNObjectClassifier):
             device: Device to run model on (cuda/cpu/auto)
             auto_save: Whether to auto-save after learning
             batch_retrain_interval: Retrain model every N samples (0 = always retrain)
+            max_samples_per_class: Maximum samples to keep per class
         """
-        super().__init__(n_neighbors, confidence_threshold, model_path, device)
+        super().__init__(n_neighbors, confidence_threshold, model_path, device, max_samples_per_class)
         self.auto_save = auto_save
         self.batch_retrain_interval = batch_retrain_interval
         self.samples_since_retrain = 0
         self.pending_retrain = False
+        self.learning_history = []  # Track learning events
         
     def add_sample(self, image: np.ndarray, label: str, retrain: bool = True):
         """
-        Add a training sample with optimized retraining.
+        Add a training sample with optimized batch retraining.
         
         Args:
             image: Image as numpy array
             label: Object label
-            retrain: Whether to retrain KNN immediately
+            retrain: Whether to consider retraining
         """
-        embedding = self.extract_embedding(image)
-        self.X_train.append(embedding)
-        self.y_train.append(label)
+        # Use parent's thread-safe add_sample but control retraining
         self.samples_since_retrain += 1
         
         # Batch retraining optimization
@@ -58,31 +59,36 @@ class KNNOnlineClassifier(KNNObjectClassifier):
             self.samples_since_retrain >= self.batch_retrain_interval  # Batch interval reached
         )
         
-        if should_retrain and len(self.X_train) > 0:
-            self.retrain_model()
+        # Call parent's add_sample with controlled retraining
+        super().add_sample(image, label, retrain=should_retrain)
+        
+        if should_retrain:
             self.samples_since_retrain = 0
             self.pending_retrain = False
         else:
             self.pending_retrain = True
             
-        logger.info(f"Added sample for '{label}'. Total: {len(self.X_train)}, Pending retrain: {self.pending_retrain}")
+        # Track learning event
+        self.learning_history.append({
+            'label': label,
+            'timestamp': np.datetime64('now'),
+            'total_samples': len(self.X_train)
+        })
+        
+        # Trim history if too long
+        if len(self.learning_history) > 1000:
+            self.learning_history = self.learning_history[-500:]
+            
+        logger.info(f"Online learning: '{label}'. Total: {len(self.X_train)}, Pending retrain: {self.pending_retrain}")
     
     def retrain_model(self):
-        """Retrain the KNN model with current training data."""
-        if len(self.X_train) > 0:
-            # Convert to numpy arrays for efficiency
-            if not isinstance(self.X_train, np.ndarray):
-                self.X_train = np.array(self.X_train)
-                self.y_train = np.array(self.y_train)
-            
-            # Use min of n_neighbors and number of samples
-            actual_neighbors = min(self.n_neighbors, len(self.X_train))
-            from sklearn.neighbors import KNeighborsClassifier
-            self.knn = KNeighborsClassifier(n_neighbors=actual_neighbors)
-            self.knn.fit(self.X_train, self.y_train)
-            self.trained = True
-            self.pending_retrain = False
-            logger.info(f"Model retrained with {len(self.X_train)} samples")
+        """Force retrain the KNN model with current training data."""
+        if self.pending_retrain:
+            with self._lock:
+                self._retrain_knn()
+                self.pending_retrain = False
+                self.samples_since_retrain = 0
+                logger.info(f"Model retrained with {len(self.X_train)} samples")
     
     def predict_and_learn(self, 
                          image: np.ndarray, 
