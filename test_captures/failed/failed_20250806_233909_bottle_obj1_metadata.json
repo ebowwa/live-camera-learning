@@ -1,0 +1,19 @@
+{
+  "timestamp": "20250806_233909",
+  "yolo_class": "bottle",
+  "yolo_confidence": 0.85,
+  "yolo_bbox": [
+    100,
+    50,
+    80,
+    150
+  ],
+  "knn_prediction": "unknown",
+  "knn_confidence": 0.0,
+  "all_scores": {},
+  "original_frame_shape": [
+    480,
+    640,
+    3
+  ]
+}
