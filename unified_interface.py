@@ -68,36 +68,65 @@ class UnifiedEdaxShifu:
         }
         
     def get_frame(self) -> Optional[np.ndarray]:
-        """Get the current frame with detections."""
+        """Get the current frame with YOLO detections and KNN recognition."""
         # Read frame from stream
         ret, frame = self.system.stream.read_frame()
         if not ret or frame is None:
             return None
         
-        # Process frame with YOLO and KNN
-        results = self.system.process_frame(frame)
-        
         # Store original frame
         self.current_frame = frame
+        display_frame = frame.copy()
         
-        # Return display frame if available, otherwise return original
-        if results and 'display_frame' in results and results['display_frame'] is not None:
-            return results['display_frame']  # Return frame with detections
+        # Run YOLO detection
+        detections = self.system.yolo.detect(frame)
         
-        # If no display frame, draw detections ourselves
-        if results and 'detections' in results and results['detections']:
-            display_frame = frame.copy()
-            for det in results['detections']:
-                bbox = det.get('bbox', [])
-                if len(bbox) == 4:
-                    x1, y1, x2, y2 = [int(x) for x in bbox]
-                    cv2.rectangle(display_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                    label = f"{det.get('class_name', 'object')}: {det.get('confidence', 0):.2f}"
-                    cv2.putText(display_frame, label, (x1, y1-10), 
-                               cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-            return display_frame
+        # Process each detection
+        for det in detections:
+            bbox = det.get('bbox', [])
+            if len(bbox) == 4:
+                x, y, w, h = [int(v) for v in bbox]
+                
+                # Crop the detected object for KNN
+                crop = frame[y:y+h, x:x+w]
+                if crop.size > 0:
+                    # Run KNN classification on the crop
+                    recognition = self.system.knn.predict(crop)
+                    
+                    # Determine color and label based on recognition
+                    if recognition and recognition.is_known:
+                        # Known object - green box
+                        color = (0, 255, 0)
+                        label = f"{recognition.label} ({recognition.confidence:.2f})"
+                    else:
+                        # Unknown object - red box
+                        color = (0, 0, 255)
+                        yolo_class = det.get('class_name', 'object')
+                        conf = det.get('confidence', 0)
+                        label = f"Unknown: {yolo_class} ({conf:.2f})"
+                    
+                    # Draw bounding box
+                    cv2.rectangle(display_frame, (x, y), (x+w, y+h), color, 2)
+                    
+                    # Draw label with background
+                    label_size, _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)
+                    cv2.rectangle(display_frame, (x, y-20), (x+label_size[0], y), color, -1)
+                    cv2.putText(display_frame, label, (x, y-5), 
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
         
-        return frame
+        # Add status overlay
+        classes = self.system.knn.get_known_classes()
+        status_text = f"Known: {len(classes)} classes | Objects detected: {len(detections)}"
+        cv2.putText(display_frame, status_text, (10, 30), 
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+        
+        # Show some known classes
+        if classes:
+            classes_text = f"Classes: {', '.join(classes[:5])}{'...' if len(classes) > 5 else ''}"
+            cv2.putText(display_frame, classes_text, (10, 55), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
+        
+        return display_frame
     
     def capture_frame(self) -> Tuple[Optional[Image.Image], str]:
         """Capture current frame for annotation."""
@@ -146,7 +175,9 @@ class UnifiedEdaxShifu:
         
         # Convert PIL to numpy
         img_array = np.array(image)
-        if img_array.shape[2] == 4:  # RGBA
+        if len(img_array.shape) == 2:  # Grayscale
+            img_array = cv2.cvtColor(img_array, cv2.COLOR_GRAY2BGR)
+        elif img_array.shape[2] == 4:  # RGBA
             img_array = cv2.cvtColor(img_array, cv2.COLOR_RGBA2BGR)
         else:  # RGB
             img_array = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
@@ -155,27 +186,23 @@ class UnifiedEdaxShifu:
         self.system.teach_object(img_array, label)
         self.stats['taught'] += 1
         
-        # Save model
+        # Save model immediately
         self.system.knn.save_model()
         
-        return f"✅ Taught: {label} (Total: {len(self.system.knn.get_known_classes())} classes)"
+        # Force reload to ensure the model is updated
+        self.system.reload_model()
+        
+        classes = self.system.knn.get_known_classes()
+        return f"✅ Taught: {label} (Total: {len(classes)} classes: {', '.join(classes)})"
     
-    def annotate_capture(self, label: str) -> str:
-        """Annotate the last captured frame."""
+    def get_last_capture_as_pil(self) -> Optional[Image.Image]:
+        """Get the last capture as a PIL image for the teaching interface."""
         if self.last_capture is None:
-            return "No capture to annotate"
+            return None
         
-        if not label:
-            return "Please provide a label"
-        
-        # Teach using last capture
-        self.system.teach_object(self.last_capture, label)
-        self.stats['annotations'] += 1
-        
-        # Save model
-        self.system.knn.save_model()
-        
-        return f"✅ Annotated as: {label}"
+        # Convert BGR to RGB and then to PIL
+        img_rgb = cv2.cvtColor(self.last_capture, cv2.COLOR_BGR2RGB)
+        return Image.fromarray(img_rgb)
     
     def get_stats(self) -> str:
         """Get current statistics."""
@@ -184,7 +211,6 @@ class UnifiedEdaxShifu:
 • Known classes: {len(classes)}
 • Total samples: {len(self.system.knn.X_train) if self.system.knn.X_train is not None else 0}
 • Captures: {self.stats['captures']}
-• Annotations: {self.stats['annotations']}
 • Taught: {self.stats['taught']}
 • Classes: {', '.join(classes[:5])}{'...' if len(classes) > 5 else ''}"""
     
@@ -331,7 +357,7 @@ class UnifiedEdaxShifu:
             
             # Use last capture button - loads captured image into teach interface
             use_capture_btn.click(
-                lambda: self.last_capture if self.last_capture is not None else None,
+                self.get_last_capture_as_pil,
                 outputs=[teach_img]
             )
             

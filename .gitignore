@@ -60,7 +60,7 @@ env/
 venv/
 ENV/
 
-# Model files
+# Model files and training artifacts
 *.pkl
 *.pth
 *.pt
@@ -76,6 +76,15 @@ ENV/
 *.weights
 models/
 assets/*.onnx
+checkpoints/
+saved_models/
+experiments/
+wandb/
+mlruns/
+tb_logs/
+lightning_logs/
+*.npz
+*.npy
 
 # Files that might appear in the root of a volume
 .DocumentRevisions-V100

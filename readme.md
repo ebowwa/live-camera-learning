@@ -54,10 +54,10 @@ uv run python run_rtsp.py --headless
 ### Individual Components
 ```bash
 # Run intelligent capture with RTSP
-uv run main.py --mode intelligent --url "rtsp://admin:admin@192.168.42.1:554/live"
+uv run main.py --url "rtsp://admin:admin@192.168.42.1:554/live"
 
 # Run with webcam
-uv run main.py --mode intelligent --url 0
+uv run main.py --url 0
 
 # Run annotation interface separately
 uv run annotate.py
