@@ -19,6 +19,7 @@ from .rtsp_stream import RTSPStream
 from .yolo_detector import YOLODetector
 from .knn_classifier import AdaptiveKNNClassifier, Recognition
 from .trigger_system import TriggerManager, KeyboardTrigger, ObjectDetectionTrigger, TriggerEvent
+from .live_model_reloader import PollingModelReloader
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -35,7 +36,8 @@ class IntelligentCaptureSystem:
                  yolo_model_path: str = "assets/yolo11n.onnx",
                  knn_model_path: str = "models/knn_classifier.pkl",
                  capture_dir: str = "intelligent_captures",
-                 confidence_threshold: float = 0.7):
+                 confidence_threshold: float = 0.7,
+                 enable_live_learning: bool = True):
         """
         Initialize the intelligent capture system.
         
@@ -45,6 +47,7 @@ class IntelligentCaptureSystem:
             knn_model_path: Path to save/load KNN model
             capture_dir: Directory for captured frames
             confidence_threshold: Threshold for KNN confidence
+            enable_live_learning: Enable automatic model reloading for live learning
         """
         # Initialize components
         self.stream = RTSPStream(rtsp_url)
@@ -78,6 +81,12 @@ class IntelligentCaptureSystem:
         # Callbacks
         self.gemini_callback: Optional[Callable] = None
         self.capture_callback: Optional[Callable] = None
+        
+        # Live learning setup
+        self.enable_live_learning = enable_live_learning
+        self.model_reloader = None
+        if enable_live_learning:
+            self._setup_live_learning()
         
     def _setup_triggers(self):
         """Setup default triggers."""
@@ -304,6 +313,49 @@ class IntelligentCaptureSystem:
         cv2.imwrite(filepath, frame)
         
         logger.info(f"📚 Taught new object: {label}")
+    
+    def _setup_live_learning(self):
+        """Setup live model reloading for continuous learning."""
+        try:
+            logger.info("Setting up live learning with polling approach...")
+            self.model_reloader = PollingModelReloader(
+                model_path=self.knn.model_path,
+                reload_callback=self._reload_model_callback,
+                poll_interval=2.0  # Check every 2 seconds
+            )
+            
+            if self.model_reloader.start():
+                logger.info("🔄 Live learning enabled - model will auto-reload when annotations are added")
+            else:
+                logger.warning("❌ Could not enable live learning")
+                self.enable_live_learning = False
+                
+        except Exception as e:
+            logger.warning(f"Live learning setup failed: {e}, continuing without it")
+            self.enable_live_learning = False
+
+    def _reload_model_callback(self):
+        """Callback for model reloading."""
+        old_count = len(self.knn.X_train) if self.knn.X_train is not None else 0
+        self.knn.load_model()
+        new_count = len(self.knn.X_train) if self.knn.X_train is not None else 0
+        
+        if new_count > old_count:
+            self.stats['knn_updates'] += 1
+            logger.info(f"🎯 Live learning: +{new_count - old_count} samples (total: {new_count})")
+            return True
+        return False
+
+    def stop_live_learning(self):
+        """Stop the live learning system."""
+        if self.model_reloader and self.model_reloader.is_running():
+            self.model_reloader.stop()
+            logger.info("🛑 Live learning stopped")
+            
+    def __del__(self):
+        """Cleanup when object is destroyed."""
+        if hasattr(self, 'model_reloader'):
+            self.stop_live_learning()
         
     def reload_model(self):
         """Reload the KNN model to get latest annotations."""
