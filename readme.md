@@ -36,39 +36,45 @@ The system creates an intelligent feedback loop where:
 
 ## 🚀 Quick Start
 
-### Complete System with RTSP
+### Main Application (Recommended)
 ```bash
-# Run the full intelligent system with RTSP stream
-uv run python run_rtsp.py
+# Run with webcam (most common)
+uv run main.py --url 0
 
-# Use webcam instead of RTSP
-uv run python run_rtsp.py --webcam
+# Run with RTSP camera
+uv run main.py --url "rtsp://your-camera-url"
 
-# Use custom RTSP URL
-uv run python run_rtsp.py --url "rtsp://your-camera-url"
-
-# Run headless (no display window)
-uv run python run_rtsp.py --headless
+# Examples:
+uv run main.py --url "rtsp://admin:admin@192.168.42.1:554/live"  # reCamera
+uv run main.py --url "rtsp://192.168.1.100:554/stream1"         # Generic IP cam
 ```
 
-### Individual Components
-```bash
-# Run intelligent capture with RTSP
-uv run main.py --url "rtsp://admin:admin@192.168.42.1:554/live"
+### Enhanced AI+Human Annotation Features
+- **🤖 AI Suggestions**: Gemini Vision provides automatic annotations (requires GEMINI_API_KEY)
+- **👤 Human Interface**: Web-based annotation at http://localhost:7860
+- **📊 Dual Statistics**: Track AI vs human annotations
+- **🔄 Real-time Learning**: Model updates immediately with new annotations
 
-# Run with webcam
+#### Setup AI Features (Optional)
+```bash
+# Set Gemini API key for AI suggestions
+export GEMINI_API_KEY="your-gemini-api-key-here"
+
+# Run with AI annotations enabled
 uv run main.py --url 0
+```
+
+Without the API key, the system falls back to human-only annotation mode.
+
+### Legacy Components (Alternative Methods)
+```bash
+# Run RTSP-focused version
+uv run python run_rtsp.py --url "rtsp://your-camera-url"
 
 # Run annotation interface separately
 uv run annotate.py
-```
 
-### Run Both Components Together
-```bash
-# Using the launcher script
-./run_with_annotation.sh
-
-# With custom RTSP URL
+# Using launcher script
 ./run_with_annotation.sh "rtsp://your-camera-url"
 ```
 
@@ -149,7 +155,15 @@ Template for fine-tuning YOLO models with Ultralytics
 ### Machine Learning
 - **scikit-learn**: K-Nearest Neighbors classifier
 - **PyTorch**: Deep learning framework
-- **Google Gemini**: Vision API for annotations
+
+### AI Annotation System
+- **Google Gemini Vision**: Automatic AI annotations with confidence scoring
+- **Abstract Annotator Architecture**: Pluggable annotation system supporting:
+  - Human annotation via web interface
+  - AI-powered suggestions
+  - Consensus between multiple annotators
+  - Fallback strategies (AI → Human)
+  - Weighted combinations of annotator results
 
 ### Audio & Voice
 - **Whisper**: Speech-to-text recognition
@@ -179,15 +193,20 @@ Template for fine-tuning YOLO models with Ultralytics
    - Attempts to recognize captured objects
    - Routes to success/failure paths based on confidence
 
-4. **Human-in-the-Loop Annotation**:
+4. **Enhanced AI+Human Annotation**:
    - Failed recognitions saved to `captures/failed/`
-   - Gradio interface at http://localhost:7860
-   - Human labels update KNN in real-time
+   - Enhanced Gradio interface at http://localhost:7860 with:
+     - 🤖 **AI Suggestions**: Gemini Vision provides instant annotations
+     - 👤 **Human Override**: Users can accept/reject/modify AI suggestions
+     - 📊 **Dual Statistics**: Track AI vs human annotation performance
+     - 🔄 **Multiple Strategies**: Consensus, fallback, or weighted combinations
 
-5. **Continuous Learning**:
-   - Each annotation improves the model
-   - Dataset grows in `captures/dataset/`
-   - Model saves automatically after updates
+5. **Intelligent Continuous Learning**:
+   - AI annotations provide fast initial labeling
+   - Human annotations ensure high-quality training data
+   - Model improves from both AI and human feedback
+   - Dataset grows in `captures/dataset/` with source tracking
+   - Real-time model updates after each annotation
 
 ### Directory Structure
 ```
