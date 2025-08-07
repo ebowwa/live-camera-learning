@@ -166,7 +166,7 @@ class GeminiAnnotator(BaseAnnotator):
         pil_image = Image.fromarray(image_rgb)
         
         # Resize if too large (Gemini has size limits)
-        max_size = 2048
+        max_size = 128
         if max(pil_image.size) > max_size:
             pil_image.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
             logger.debug(f"Resized image to {pil_image.size} for Gemini")
@@ -184,27 +184,28 @@ class GeminiAnnotator(BaseAnnotator):
             Formatted prompt string
         """
         # Enhanced prompt that requests object identification and location
-        prompt = """Analyze this image and identify ALL objects you can see. For each object, provide:
-1. The object name (1-2 words)
-2. Its location in the image as bounding box coordinates
+#         prompt = """Analyze this image and identify ALL objects you can see. For each object, provide:
+# 1. The object name (1-2 words)
+# 2. Its location in the image as bounding box coordinates
 
-Please respond in this exact JSON format:
-{
-  "objects": [
-    {
-      "label": "object_name",
-      "confidence": 0.95,
-      "bbox": [x, y, width, height]
-    }
-  ]
-}
+# Please respond in this exact JSON format:
+# {
+#   "objects": [
+#     {
+#       "label": "object_name",
+#       "confidence": 0.95,
+#       "bbox": [x, y, width, height]
+#     }
+#   ]
+# }
 
-Where bbox coordinates are:
-- x, y: top-left corner coordinates (0-1 normalized)
-- width, height: box dimensions (0-1 normalized)
-- confidence: your confidence in the identification (0-1)
+# Where bbox coordinates are:
+# - x, y: top-left corner coordinates (0-1 normalized)
+# - width, height: box dimensions (0-1 normalized)
+# - confidence: your confidence in the identification (0-1)
 
-Example: {"objects": [{"label": "apple", "confidence": 0.9, "bbox": [0.2, 0.3, 0.3, 0.4]}]}"""
+# Example: {"objects": [{"label": "apple", "confidence": 0.9, "bbox": [0.2, 0.3, 0.3, 0.4]}]}"""
+        prompt = "please provide the object name in one word."
         
         # Add context if available
         context_parts = []
