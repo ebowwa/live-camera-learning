@@ -43,6 +43,7 @@ class AnnotationResult:
     processing_time: Optional[float] = None
     success: bool = True
     error_message: Optional[str] = None
+    bounding_boxes: Optional[List[Dict[str, Any]]] = None  # List of {x, y, w, h, label, confidence}
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
@@ -53,7 +54,8 @@ class AnnotationResult:
             'metadata': self.metadata or {},
             'processing_time': self.processing_time,
             'success': self.success,
-            'error_message': self.error_message
+            'error_message': self.error_message,
+            'bounding_boxes': self.bounding_boxes or []
         }
 
 

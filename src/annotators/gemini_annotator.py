@@ -183,8 +183,28 @@ class GeminiAnnotator(BaseAnnotator):
         Returns:
             Formatted prompt string
         """
-        # Base prompt
-        prompt = "Analyze this image and identify the main object. Respond with just the object name (one or two words maximum)."
+        # Enhanced prompt that requests object identification and location
+        prompt = """Analyze this image and identify ALL objects you can see. For each object, provide:
+1. The object name (1-2 words)
+2. Its location in the image as bounding box coordinates
+
+Please respond in this exact JSON format:
+{
+  "objects": [
+    {
+      "label": "object_name",
+      "confidence": 0.95,
+      "bbox": [x, y, width, height]
+    }
+  ]
+}
+
+Where bbox coordinates are:
+- x, y: top-left corner coordinates (0-1 normalized)
+- width, height: box dimensions (0-1 normalized)
+- confidence: your confidence in the identification (0-1)
+
+Example: {"objects": [{"label": "apple", "confidence": 0.9, "bbox": [0.2, 0.3, 0.3, 0.4]}]}"""
         
         # Add context if available
         context_parts = []
@@ -196,29 +216,85 @@ class GeminiAnnotator(BaseAnnotator):
             context_parts.append(f"Previous AI thought it might be: {request.knn_prediction} (confidence: {request.knn_confidence:.2f})")
         
         if context_parts:
-            prompt += f"\n\nContext: {' | '.join(context_parts)}"
-            prompt += "\n\nIgnore the context if it seems wrong. Focus on what you actually see in the image."
-        
-        prompt += "\n\nRespond with ONLY the object name, nothing else."
+            prompt += f"\n\nContext for reference: {' | '.join(context_parts)}"
+            prompt += "\nUse this context as a hint but focus on what you actually see."
         
         return prompt
     
     def _parse_response(self, response, request: AnnotationRequest) -> AnnotationResult:
         """
-        Parse Gemini response into AnnotationResult.
+        Parse Gemini response into AnnotationResult with bounding boxes.
         
         Args:
             response: Gemini API response
             request: Original request
             
         Returns:
-            AnnotationResult
+            AnnotationResult with bounding box information
         """
         try:
-            # Extract text from response
-            label = response.text.strip().lower()
+            response_text = response.text.strip()
             
-            # Clean up the response
+            # Try to parse JSON response first
+            try:
+                import json
+                import re
+                
+                # Extract JSON from response (handles cases where there's extra text)
+                json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+                if json_match:
+                    json_str = json_match.group(0)
+                    data = json.loads(json_str)
+                    
+                    if 'objects' in data and len(data['objects']) > 0:
+                        # Extract the primary object (first one or highest confidence)
+                        objects = data['objects']
+                        primary_obj = max(objects, key=lambda x: x.get('confidence', 0))
+                        
+                        label = primary_obj.get('label', 'unknown').lower().strip()
+                        confidence = primary_obj.get('confidence', 0.5)
+                        
+                        # Convert normalized coordinates to bounding boxes
+                        bounding_boxes = []
+                        for obj in objects:
+                            bbox_norm = obj.get('bbox', [0, 0, 1, 1])
+                            if len(bbox_norm) == 4:
+                                bounding_boxes.append({
+                                    'label': obj.get('label', 'object'),
+                                    'confidence': obj.get('confidence', 0.5),
+                                    'x': bbox_norm[0],
+                                    'y': bbox_norm[1], 
+                                    'w': bbox_norm[2],
+                                    'h': bbox_norm[3],
+                                    'normalized': True
+                                })
+                        
+                        # Create metadata
+                        metadata = {
+                            'raw_response': response_text,
+                            'model': self.model_name,
+                            'objects_detected': len(objects),
+                            'json_parsed': True,
+                            'prompt_included_context': bool(request.yolo_detections or request.knn_prediction)
+                        }
+                        
+                        if hasattr(response, 'usage_metadata'):
+                            metadata['usage'] = response.usage_metadata
+                        
+                        return AnnotationResult(
+                            label=self._clean_label(label),
+                            confidence=float(confidence),
+                            source=self.source,
+                            success=True,
+                            metadata=metadata,
+                            bounding_boxes=bounding_boxes
+                        )
+            
+            except (json.JSONDecodeError, KeyError, ValueError) as e:
+                logger.debug(f"Failed to parse JSON response: {e}, falling back to text parsing")
+            
+            # Fallback to simple text parsing
+            label = response_text.lower()
             label = self._clean_label(label)
             
             if not label:
@@ -231,12 +307,13 @@ class GeminiAnnotator(BaseAnnotator):
                 )
             
             # Estimate confidence based on response characteristics
-            confidence = self._estimate_confidence(response.text, request)
+            confidence = self._estimate_confidence(response_text, request)
             
             # Create metadata
             metadata = {
-                'raw_response': response.text,
+                'raw_response': response_text,
                 'model': self.model_name,
+                'json_parsed': False,
                 'prompt_included_context': bool(request.yolo_detections or request.knn_prediction)
             }
             
@@ -339,7 +416,23 @@ class GeminiAnnotator(BaseAnnotator):
     
     def is_available(self) -> bool:
         """Check if Gemini annotator is available."""
-        return self.enabled and self.api_key is not None
+        if not self.enabled or not self.api_key:
+            return False
+        
+        # Try to validate the API key by initializing the model
+        if not hasattr(self, '_api_validated'):
+            try:
+                genai.configure(api_key=self.api_key)
+                # Try to list models to validate the API key
+                models = genai.list_models()
+                self._api_validated = True
+                return True
+            except Exception as e:
+                logger.warning(f"API key validation failed: {e}")
+                self._api_validated = False
+                return False
+        
+        return self._api_validated
     
     def get_model_info(self) -> Dict[str, Any]:
         """Get information about the Gemini model."""

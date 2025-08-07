@@ -21,16 +21,27 @@ class HumanAnnotator(BaseAnnotator):
     
     def __init__(self, 
                  name: str = "human",
-                 interactive_mode: bool = True):
+                 interactive_mode: bool = True,
+                 **kwargs):
         """
         Initialize human annotator.
         
         Args:
             name: Annotator name
             interactive_mode: If True, uses command line interaction
+            **kwargs: Additional parameters (ignored for compatibility)
+                - knn_classifier: KNN classifier (not used in CLI mode)
+                - failed_dir: Failed captures directory
+                - dataset_dir: Dataset directory
+                - timeout_seconds: Timeout for annotation
         """
         super().__init__(name, AnnotationSource.HUMAN)
         self.interactive_mode = interactive_mode
+        # Store optional parameters but don't use them in CLI mode
+        self.knn_classifier = kwargs.get('knn_classifier')
+        self.failed_dir = kwargs.get('failed_dir', 'captures/failed')
+        self.dataset_dir = kwargs.get('dataset_dir', 'captures/dataset')
+        self.timeout_seconds = kwargs.get('timeout_seconds', 300.0)
     
     def annotate(self, request: AnnotationRequest) -> AnnotationResult:
         """

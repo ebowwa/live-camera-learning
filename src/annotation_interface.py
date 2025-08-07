@@ -222,6 +222,9 @@ class HumanAnnotationInterface:
         # Current task
         self.current_task: Optional[AnnotationTask] = None
         
+        # Current annotator mode
+        self.current_annotator_mode = "ai_first" if self.use_ai_annotator else "human_only"
+        
         # Create interface
         self.interface = self._create_interface()
         
@@ -313,10 +316,46 @@ class HumanAnnotationInterface:
                         step=0.1
                     )
                     
+                    # Annotator Mode Selection
+                    gr.Markdown("### Annotation Strategy")
+                    
+                    # API Key Configuration
+                    with gr.Accordion("🔑 API Configuration", open=False):
+                        api_key_input = gr.Textbox(
+                            label="Gemini API Key",
+                            placeholder="Enter your Gemini API key (optional)",
+                            type="password",
+                            value="",
+                            info="Set API key to enable AI annotation features"
+                        )
+                        api_key_status = gr.Textbox(
+                            label="API Status",
+                            value="🔴 No API key configured" if not (self.gemini_annotator and self.gemini_annotator.is_available()) else "🟢 API key configured",
+                            interactive=False
+                        )
+                        update_api_btn = gr.Button("Update API Key", variant="secondary", size="sm")
+                    
+                    annotator_mode = gr.Dropdown(
+                        label="Annotator Mode",
+                        choices=[
+                            ("👤 Human Only", "human_only"),
+                            ("🤖 Gemini Only", "gemini_only"),
+                            ("🤖→👤 AI First (Fallback to Human)", "ai_first"),
+                            ("👤→🤖 Human First (Fallback to AI)", "human_first"),
+                            ("🤝 Consensus (Both Must Agree)", "consensus"),
+                            ("⚖️ Weighted (80% AI, 20% Human)", "weighted_ai"),
+                            ("⚖️ Weighted (80% Human, 20% AI)", "weighted_human")
+                        ],
+                        value="ai_first" if self.use_ai_annotator and self.gemini_annotator and self.gemini_annotator.is_available() else "human_only",
+                        interactive=True,
+                        info="Select how failed detections should be annotated"
+                    )
+                    
                     # Action buttons
                     with gr.Row():
                         submit_btn = gr.Button("Submit", variant="primary")
                         skip_btn = gr.Button("Skip", variant="secondary")
+                        auto_annotate_btn = gr.Button("🤖 Auto-Annotate", variant="secondary")
                         
                     # Statistics
                     gr.Markdown("### Session Statistics")
@@ -529,14 +568,160 @@ class HumanAnnotationInterface:
                     return "Model saved successfully!"
                 return "No model to save"
             
+            def switch_annotator_mode(mode):
+                """Switch between different annotator modes."""
+                if not ANNOTATORS_AVAILABLE:
+                    return "Annotator system not available", gr.update(value="human_only")
+                
+                status_msg = f"Switched to {mode} mode"
+                
+                # Store the selected mode for use in annotation
+                self.current_annotator_mode = mode
+                
+                # Update UI based on mode
+                if mode == "gemini_only":
+                    if not self.gemini_annotator or not self.gemini_annotator.is_available():
+                        return "Gemini not available (check GEMINI_API_KEY)", gr.update(value="human_only")
+                    status_msg = "🤖 Using Gemini for all annotations"
+                elif mode == "human_only":
+                    status_msg = "👤 Using human annotations only"
+                elif mode == "ai_first":
+                    status_msg = "🤖→👤 AI first, fallback to human"
+                elif mode == "human_first":
+                    status_msg = "👤→🤖 Human first, fallback to AI"
+                elif mode == "consensus":
+                    status_msg = "🤝 Requiring consensus between AI and human"
+                elif mode == "weighted_ai":
+                    status_msg = "⚖️ Weighted: 80% AI, 20% Human"
+                elif mode == "weighted_human":
+                    status_msg = "⚖️ Weighted: 80% Human, 20% AI"
+                
+                return status_msg, gr.update()
+            
+            def auto_annotate_current():
+                """Auto-annotate current image using selected strategy."""
+                if not self.current_task:
+                    return "No image loaded", self._format_stats()
+                
+                if not ANNOTATORS_AVAILABLE:
+                    return "Annotator system not available", self._format_stats()
+                
+                mode = getattr(self, 'current_annotator_mode', 'ai_first')
+                
+                # Create annotation request
+                request = AnnotationRequest(
+                    image=self.current_task.image_array,
+                    image_path=self.current_task.image_path,
+                    metadata=self.current_task.metadata,
+                    yolo_detections=self.current_task.yolo_detections,
+                    knn_prediction=self.current_task.knn_prediction,
+                    knn_confidence=self.current_task.knn_confidence,
+                    timestamp=self.current_task.timestamp
+                )
+                
+                # Get annotation based on mode
+                try:
+                    if mode == "gemini_only" and self.gemini_annotator:
+                        result = self.gemini_annotator.annotate(request)
+                    elif mode == "human_only":
+                        return "Human mode - please annotate manually", self._format_stats()
+                    else:
+                        # Use factory to create appropriate annotator
+                        annotator = AnnotatorFactory.create_preset(mode)
+                        result = annotator.annotate(request)
+                    
+                    if result.success:
+                        # Save annotation
+                        self._save_to_dataset(self.current_task, result.label)
+                        
+                        # Update KNN
+                        if self.knn:
+                            self.knn.add_feedback_sample(
+                                self.current_task.image_array,
+                                predicted_label=self.current_task.knn_prediction or "unknown",
+                                correct_label=result.label,
+                                source=result.source.value
+                            )
+                            self.knn.save_model()
+                        
+                        # Update stats
+                        self.stats['total_annotated'] += 1
+                        self.stats['ai_annotations'] += 1
+                        self.stats['unique_labels'].add(result.label)
+                        
+                        # Move to next
+                        self.annotation_queue.mark_completed(self.current_task)
+                        self.current_task = None
+                        
+                        return f"✅ Auto-annotated as '{result.label}' (confidence: {result.confidence:.2f})", self._format_stats()
+                    else:
+                        return f"❌ Auto-annotation failed: {result.error_message}", self._format_stats()
+                        
+                except Exception as e:
+                    logger.error(f"Auto-annotation error: {e}")
+                    return f"❌ Error: {str(e)}", self._format_stats()
+            
             # Connect events
+            
+            def update_api_key(api_key):
+                """Update the Gemini API key and reinitialize the annotator."""
+                if not api_key or api_key.strip() == "":
+                    return "Please enter an API key", "🔴 No API key configured", gr.update()
+                
+                try:
+                    # Set the API key in environment for future annotators
+                    import os
+                    os.environ['GEMINI_API_KEY'] = api_key.strip()
+                    
+                    # Reinitialize the Gemini annotator with the new key
+                    self.gemini_annotator = AnnotatorFactory.create_gemini_annotator()
+                    
+                    if self.gemini_annotator.is_available():
+                        self.use_ai_annotator = True
+                        logger.info("Gemini API key updated successfully")
+                        
+                        # Update the dropdown to default to ai_first if it was on human_only
+                        new_mode = "ai_first" if self.current_annotator_mode == "human_only" else self.current_annotator_mode
+                        self.current_annotator_mode = new_mode
+                        
+                        return "✅ API key updated successfully", "🟢 API key configured", gr.update(value=new_mode)
+                    else:
+                        return "❌ Invalid API key or connection failed", "🔴 API key invalid", gr.update()
+                        
+                except Exception as e:
+                    logger.error(f"Error updating API key: {e}")
+                    return f"❌ Error: {str(e)}", "🔴 Error updating key", gr.update()
+            
+            # Connect API key update button
+            update_api_btn.click(
+                update_api_key,
+                inputs=[api_key_input],
+                outputs=[status_msg, api_key_status, annotator_mode]
+            )
+            
+            # Connect annotator mode switcher
+            annotator_mode.change(
+                switch_annotator_mode,
+                inputs=[annotator_mode],
+                outputs=[status_msg, annotator_mode]
+            )
+            
+            # Connect auto-annotate button
+            auto_annotate_btn.click(
+                auto_annotate_current,
+                outputs=[status_msg, stats_display]
+            ).then(
+                load_next_image,
+                outputs=[image_display, yolo_info, knn_info, ai_annotation_display, queue_status, status_msg, common_labels, custom_label] if self.use_ai_annotator else [image_display, yolo_info, knn_info, queue_status, status_msg, common_labels, custom_label]
+            )
+            
             if self.use_ai_annotator:
                 load_next_btn.click(
                     load_next_image,
                     outputs=[image_display, yolo_info, knn_info, ai_annotation_display, queue_status, status_msg, common_labels, custom_label]
                 )
                 
-                # Connect AI annotation button
+                # Connect AI suggestion button
                 auto_ai_btn.click(
                     get_ai_annotation,
                     outputs=[ai_annotation_display, status_msg]

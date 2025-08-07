@@ -210,11 +210,23 @@ def run_web_interface(args):
     try:
         app = UnifiedEdaxShifu(rtsp_url=args.url)
         interface = app.create_interface()
-        interface.launch(
-            server_port=args.port,
-            share=args.share,
-            server_name="0.0.0.0"
-        )
+        
+        # Try multiple ports if the requested one is in use
+        for port_attempt in range(args.port, args.port + 10):
+            try:
+                print(f"Trying port {port_attempt}...")
+                interface.launch(
+                    server_port=port_attempt,
+                    share=args.share,
+                    server_name="0.0.0.0"
+                )
+                print(f"✅ Web interface running at http://localhost:{port_attempt}")
+                break
+            except OSError as e:
+                if "address already in use" in str(e).lower() and port_attempt < args.port + 9:
+                    continue
+                else:
+                    raise e
     except KeyboardInterrupt:
         print("\n\nShutting down web interface...")
         sys.exit(0)
