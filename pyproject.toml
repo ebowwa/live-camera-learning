@@ -18,4 +18,5 @@ dependencies = [
     "scipy>=1.10.0",
     "mediapipe>=0.10.0",
     "gradio>=4.0.0",
+    "google-generativeai>=0.8.5",
 ]

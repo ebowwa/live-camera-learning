@@ -10,7 +10,7 @@ from .base_annotator import BaseAnnotator, AnnotationResult, AnnotationRequest
 from .human_annotator import HumanAnnotator
 from .gemini_annotator import GeminiAnnotator
 from .multi_annotator import MultiAnnotator, ConsensusAnnotator, FallbackAnnotator
-from .annotator_factory import AnnotatorFactory
+from .annotator_factory import AnnotatorFactory, create_dual_annotator
 
 __all__ = [
     'BaseAnnotator',
@@ -21,5 +21,6 @@ __all__ = [
     'MultiAnnotator',
     'ConsensusAnnotator',
     'FallbackAnnotator',
-    'AnnotatorFactory'
+    'AnnotatorFactory',
+    'create_dual_annotator'
 ]

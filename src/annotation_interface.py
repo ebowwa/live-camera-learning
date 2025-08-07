@@ -30,9 +30,10 @@ try:
         create_dual_annotator
     )
     ANNOTATORS_AVAILABLE = True
-except ImportError:
+    logger.info("✅ Enhanced AI+Human annotator system loaded successfully")
+except ImportError as e:
     ANNOTATORS_AVAILABLE = False
-    logger.warning("New annotator system not available, using legacy human-only mode")
+    logger.warning(f"New annotator system not available: {e}")
 
 
 @dataclass
