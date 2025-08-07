@@ -142,11 +142,11 @@ class PollingModelReloader:
             return False
             
         if not os.path.exists(self.model_path):
-            logger.error(f"Model file not found: {self.model_path}")
-            return False
-            
-        # Get initial modification time
-        self.last_modified = os.path.getmtime(self.model_path)
+            logger.info(f"Model file not found yet: {self.model_path}, will watch for creation")
+            self.last_modified = 0  # Will detect when file is first created
+        else:
+            # Get initial modification time
+            self.last_modified = os.path.getmtime(self.model_path)
         
         # Start polling thread
         self.running = True

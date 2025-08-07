@@ -78,6 +78,9 @@ class KNNObjectClassifier:
         import threading
         self._lock = threading.RLock()
         
+        # Ensure model directory exists
+        os.makedirs(os.path.dirname(self.model_path), exist_ok=True)
+        
         # Try to load existing model
         self.load_model()
         

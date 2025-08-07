@@ -18,11 +18,21 @@ import json
 from .rtsp_stream import RTSPStream
 from .yolo_detector import YOLODetector
 from .knn_classifier import AdaptiveKNNClassifier, Recognition
+from dataclasses import dataclass
 from .trigger_system import TriggerManager, KeyboardTrigger, ObjectDetectionTrigger, TriggerEvent
 from .live_model_reloader import PollingModelReloader
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+@dataclass
+class ObjectRecognition:
+    """Recognition result for a specific detected object."""
+    yolo_class: str
+    yolo_confidence: float
+    yolo_bbox: List[int]
+    knn_result: Recognition
+    cropped_image: np.ndarray
 
 
 class IntelligentCaptureSystem:
@@ -145,95 +155,173 @@ class IntelligentCaptureSystem:
             'yolo_detections': yolo_detections,
             'handheld_detections': handheld_detections,
             'triggers': trigger_events,
-            'knn_result': None,
+            'object_recognitions': [],
             'captured': False
         }
         
         if trigger_events:
-            # Capture and classify
-            knn_result = self._capture_and_classify(frame, handheld_detections)
-            results['knn_result'] = knn_result
+            # Capture and classify each detected object
+            object_recognitions = self._capture_and_classify(frame, handheld_detections)
+            results['object_recognitions'] = object_recognitions
             results['captured'] = True
             
         return results
         
     def _capture_and_classify(self, frame: np.ndarray, 
-                             detections: List[Dict]) -> Optional[Recognition]:
+                             detections: List[Dict]) -> List[ObjectRecognition]:
         """
-        Capture frame and run KNN classification.
+        Capture frame and run KNN classification on each detected object.
         
         Args:
             frame: Frame to capture
             detections: YOLO detections
             
         Returns:
-            KNN recognition result
+            List of ObjectRecognition results, one per detected object
         """
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        object_recognitions = []
         
-        # Run KNN classification
-        recognition = self.knn.predict(frame)
+        if not detections:
+            logger.warning("No objects detected for classification")
+            return []
         
-        # Determine success/failure path
-        if recognition.is_known:
-            # Successful recognition
-            self.stats['successful_recognitions'] += 1
+        # Process each detected object
+        for i, detection in enumerate(detections):
+            # Extract object bounding box
+            x, y, w, h = detection['bbox']
             
-            # Save to successful directory
-            filename = f"success_{timestamp}_{recognition.label}.jpg"
+            # Ensure bounding box is within frame bounds
+            x = max(0, x)
+            y = max(0, y)
+            w = min(w, frame.shape[1] - x)
+            h = min(h, frame.shape[0] - y)
+            
+            if w <= 0 or h <= 0:
+                logger.warning(f"Invalid bounding box for {detection['class_name']}: {detection['bbox']}")
+                continue
+                
+            # Crop the object from the frame
+            cropped_obj = frame[y:y+h, x:x+w].copy()
+            
+            # Skip if crop is too small
+            if cropped_obj.shape[0] < 10 or cropped_obj.shape[1] < 10:
+                logger.warning(f"Cropped object too small: {cropped_obj.shape}")
+                continue
+            
+            # Run KNN classification on cropped object
+            knn_result = self.knn.predict(cropped_obj)
+            
+            # Create ObjectRecognition result
+            obj_recognition = ObjectRecognition(
+                yolo_class=detection['class_name'],
+                yolo_confidence=detection['confidence'],
+                yolo_bbox=[x, y, w, h],
+                knn_result=knn_result,
+                cropped_image=cropped_obj
+            )
+            
+            object_recognitions.append(obj_recognition)
+            
+            # Log the result
+            status = "✅" if knn_result.is_known else "❌"
+            logger.info(f"{status} Object {i+1}/{len(detections)}: YOLO={detection['class_name']} → KNN={knn_result.label} ({knn_result.confidence:.2f})")
+        
+        # Process results for saving
+        self._process_object_recognitions(frame, object_recognitions, timestamp)
+        
+        return object_recognitions
+    
+    def _process_object_recognitions(self, frame: np.ndarray, 
+                                   object_recognitions: List[ObjectRecognition], 
+                                   timestamp: str):
+        """
+        Process and save object recognition results.
+        
+        Args:
+            frame: Original frame
+            object_recognitions: List of recognition results
+            timestamp: Timestamp for file naming
+        """
+        successful_objects = [obj for obj in object_recognitions if obj.knn_result.is_known]
+        failed_objects = [obj for obj in object_recognitions if not obj.knn_result.is_known]
+        
+        # Update statistics
+        self.stats['successful_recognitions'] += len(successful_objects)
+        self.stats['failed_recognitions'] += len(failed_objects)
+        
+        # Save successful recognitions
+        for i, obj in enumerate(successful_objects):
+            # Save cropped object to successful directory
+            filename = f"success_{timestamp}_{obj.knn_result.label}_obj{i+1}.jpg"
             filepath = os.path.join(self.capture_dir, "successful", filename)
-            cv2.imwrite(filepath, frame)
+            cv2.imwrite(filepath, obj.cropped_image)
             
             # Add to dataset for reinforcement
-            dataset_dir = os.path.join(self.capture_dir, "dataset", recognition.label)
+            dataset_dir = os.path.join(self.capture_dir, "dataset", obj.knn_result.label)
             os.makedirs(dataset_dir, exist_ok=True)
-            dataset_file = os.path.join(dataset_dir, f"{timestamp}.jpg")
-            cv2.imwrite(dataset_file, frame)
+            dataset_file = os.path.join(dataset_dir, f"{timestamp}_obj{i+1}.jpg")
+            cv2.imwrite(dataset_file, obj.cropped_image)
             
-            logger.info(f"✅ Recognized: {recognition.label} ({recognition.confidence:.2f})")
-            
-        else:
-            # Failed recognition - need annotation
-            self.stats['failed_recognitions'] += 1
-            
-            # Save to failed directory
-            filename = f"failed_{timestamp}_unknown.jpg"
+            # Save metadata
+            self._save_object_metadata(filepath, obj, frame.shape)
+        
+        # Save failed recognitions
+        for i, obj in enumerate(failed_objects):
+            # Save cropped object to failed directory
+            filename = f"failed_{timestamp}_{obj.yolo_class}_obj{i+1}.jpg"
             filepath = os.path.join(self.capture_dir, "failed", filename)
-            cv2.imwrite(filepath, frame)
+            cv2.imwrite(filepath, obj.cropped_image)
             
             # Save metadata in format expected by annotation interface
             metadata_file = filepath.replace('.jpg', '_metadata.json')
             metadata = {
                 'timestamp': timestamp,
-                'knn_prediction': recognition.label if recognition.label else "unknown",
-                'knn_confidence': float(recognition.confidence),
-                'yolo_detections': [
-                    {
-                        'class_name': d['class_name'],
-                        'confidence': float(d['confidence']),
-                        'bbox': [int(x) for x in d['bbox']]
-                    }
-                    for d in detections
-                ],
-                'all_scores': {k: float(v) for k, v in recognition.all_scores.items()} if recognition.all_scores else {}
+                'yolo_class': obj.yolo_class,
+                'yolo_confidence': float(obj.yolo_confidence),
+                'yolo_bbox': obj.yolo_bbox,
+                'knn_prediction': obj.knn_result.label if obj.knn_result.label else "unknown",
+                'knn_confidence': float(obj.knn_result.confidence),
+                'all_scores': {k: float(v) for k, v in obj.knn_result.all_scores.items()} if obj.knn_result.all_scores else {},
+                'original_frame_shape': list(frame.shape)
             }
             
             with open(metadata_file, 'w') as f:
                 json.dump(metadata, f, indent=2)
-            
-            logger.info(f"❌ Unknown object saved for annotation: {filepath}")
-            
-            # Trigger Gemini API (placeholder - now handled by annotation interface)
-            # self._query_gemini(frame, filepath)
-            
-        # Save general metadata
-        self._save_metadata(filepath, recognition, detections)
+                
+        # Save original frame with all objects for reference
+        if object_recognitions:
+            frame_filename = f"frame_{timestamp}_with_{len(object_recognitions)}_objects.jpg"
+            frame_filepath = os.path.join(self.capture_dir, frame_filename)
+            cv2.imwrite(frame_filepath, frame)
         
-        # Call capture callback
+        # Call capture callback with updated signature
         if self.capture_callback:
-            self.capture_callback(frame, recognition, detections)
-            
-        return recognition
+            self.capture_callback(frame, object_recognitions)
+    
+    def _save_object_metadata(self, filepath: str, obj_recognition: ObjectRecognition, frame_shape: tuple):
+        """Save metadata for a successfully recognized object."""
+        metadata = {
+            'timestamp': datetime.now().isoformat(),
+            'filepath': filepath,
+            'yolo_detection': {
+                'class_name': obj_recognition.yolo_class,
+                'confidence': float(obj_recognition.yolo_confidence),
+                'bbox': obj_recognition.yolo_bbox
+            },
+            'knn_recognition': {
+                'label': obj_recognition.knn_result.label,
+                'confidence': float(obj_recognition.knn_result.confidence),
+                'is_known': bool(obj_recognition.knn_result.is_known),
+                'all_scores': {k: float(v) for k, v in obj_recognition.knn_result.all_scores.items()}
+            },
+            'original_frame_shape': list(frame_shape),
+            'cropped_object_shape': list(obj_recognition.cropped_image.shape)
+        }
+        
+        metadata_file = filepath.replace('.jpg', '_metadata.json')
+        with open(metadata_file, 'w') as f:
+            json.dump(metadata, f, indent=2)
         
     def _query_gemini(self, frame: np.ndarray, filepath: str):
         """
@@ -266,33 +354,6 @@ class IntelligentCaptureSystem:
             )
             self.stats['knn_updates'] += 1
             
-    def _save_metadata(self, filepath: str, 
-                      recognition: Recognition,
-                      detections: List[Dict]):
-        """Save metadata for captured frame."""
-        metadata = {
-            'timestamp': datetime.now().isoformat(),
-            'filepath': filepath,
-            'recognition': {
-                'label': recognition.label,
-                'confidence': float(recognition.confidence),
-                'is_known': bool(recognition.is_known),  # Convert numpy bool to Python bool
-                'all_scores': {k: float(v) for k, v in recognition.all_scores.items()}
-            },
-            'yolo_detections': [
-                {
-                    'class_name': d['class_name'],
-                    'confidence': float(d['confidence']),
-                    'bbox': [int(x) for x in d['bbox']]  # Ensure bbox values are JSON serializable
-                }
-                for d in detections
-            ],
-            'stats': dict(self.stats)
-        }
-        
-        metadata_file = filepath.replace('.jpg', '_metadata.json')
-        with open(metadata_file, 'w') as f:
-            json.dump(metadata, f, indent=2)
             
     def teach_object(self, frame: np.ndarray, label: str):
         """
@@ -443,34 +504,71 @@ class IntelligentCaptureSystem:
         """Create annotated frame for display."""
         display_frame = frame.copy()
         
-        # Draw YOLO detections
-        for det in results['handheld_detections']:
-            x, y, w, h = det['bbox']
-            color = (0, 255, 0) if det.get('holding_gesture') else (255, 0, 0)
-            cv2.rectangle(display_frame, (x, y), (x+w, y+h), color, 2)
+        # If we have object recognitions, show them with KNN results
+        if results.get('object_recognitions'):
+            for i, obj_rec in enumerate(results['object_recognitions']):
+                x, y, w, h = obj_rec.yolo_bbox
+                
+                # Color based on KNN recognition success
+                if obj_rec.knn_result.is_known:
+                    color = (0, 255, 0)  # Green for successful recognition
+                    status_symbol = "✓"  # Checkmark
+                else:
+                    color = (0, 0, 255)  # Red for unknown
+                    status_symbol = "?"
+                    
+                # Draw bounding box
+                cv2.rectangle(display_frame, (x, y), (x+w, y+h), color, 2)
+                
+                # Create combined label: YOLO class → KNN result
+                yolo_label = f"{obj_rec.yolo_class}: {obj_rec.yolo_confidence:.2f}"
+                knn_label = f"{status_symbol} {obj_rec.knn_result.label} ({obj_rec.knn_result.confidence:.2f})"
+                
+                # Draw YOLO label (top)
+                label_y = y - 30 if y > 40 else y + h + 20
+                cv2.putText(display_frame, yolo_label, (x, label_y),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+                           
+                # Draw KNN label (below YOLO label)
+                knn_y = label_y + 15 if y > 40 else label_y + 15
+                cv2.putText(display_frame, knn_label, (x, knn_y),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                           
+                # Draw object number
+                cv2.circle(display_frame, (x + 10, y + 10), 8, color, -1)
+                cv2.putText(display_frame, str(i+1), (x + 6, y + 14),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
+        else:
+            # Fallback: Draw basic YOLO detections if no object recognitions
+            for det in results['handheld_detections']:
+                x, y, w, h = det['bbox']
+                color = (0, 255, 0) if det.get('holding_gesture') else (255, 0, 0)
+                cv2.rectangle(display_frame, (x, y), (x+w, y+h), color, 2)
+                
+                label = f"{det['class_name']}: {det['confidence']:.2f}"
+                cv2.putText(display_frame, label, (x, y-10),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                       
+        # Show recognition summary at top of screen
+        if results.get('object_recognitions'):
+            total_objects = len(results['object_recognitions'])
+            successful = sum(1 for obj in results['object_recognitions'] if obj.knn_result.is_known)
+            failed = total_objects - successful
             
-            label = f"{det['class_name']}: {det['confidence']:.2f}"
-            cv2.putText(display_frame, label, (x, y-10),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+            summary_text = f"Objects: {total_objects} | Recognized: {successful} | Unknown: {failed}"
+            cv2.putText(display_frame, summary_text, (10, 30),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
                        
-        # Show KNN result if available
-        if results['knn_result']:
-            knn_result = results['knn_result']
-            text = f"KNN: {knn_result.label} ({knn_result.confidence:.2f})"
-            color = (0, 255, 0) if knn_result.is_known else (0, 0, 255)
-            cv2.putText(display_frame, text, (10, 30),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
-                       
-        # Show stats
-        stats_text = f"Frames: {self.stats['frames_processed']} | " \
+        # Show global stats at bottom
+        stats_text = f"Total - Frames: {self.stats['frames_processed']} | " \
                     f"Success: {self.stats['successful_recognitions']} | " \
                     f"Failed: {self.stats['failed_recognitions']}"
         cv2.putText(display_frame, stats_text, (10, frame.shape[0] - 10),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
                    
         # Show trigger status
         if results['triggers']:
-            cv2.putText(display_frame, "TRIGGERED!", (frame.shape[1]//2 - 50, 50),
+            cv2.putText(display_frame, "TRIGGERED!", (frame.shape[1]//2 - 50, 60),
                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
                        
         return display_frame
