@@ -66,17 +66,6 @@ uv run main.py --url 0
 
 Without the API key, the system falls back to human-only annotation mode.
 
-### Legacy Components (Alternative Methods)
-```bash
-# Run RTSP-focused version
-uv run python run_rtsp.py --url "rtsp://your-camera-url"
-
-# Run annotation interface separately
-uv run annotate.py
-
-# Using launcher script
-./run_with_annotation.sh "rtsp://your-camera-url"
-```
 
 ### Project Structure
 ```
@@ -92,88 +81,7 @@ edaxshifu/
 └── recamera-user-manual.pdf
 ```
 
-## 🔧 Core Components
 
-### 1. **RTSP Streaming Module** (`src/rtsp_stream.py`)
-- `RTSPStream` class: Handles connection, frame reading, reconnection
-- `RTSPViewer` class: Manages display and user interaction
-- Auto-reconnection on stream failure
-- Performance statistics tracking
-
-### 2. **Deprecated Modules** (Historical Evolution)
-
-#### **smart_camera.py** - Voice-Controlled AI Camera
-The most sophisticated implementation featuring:
-- **Voice Commands**: "This is a [object]" for teaching
-- **ResNet18 + KNN**: Few-shot learning system
-- **Whisper STT**: Speech recognition
-- **Edge TTS**: Voice feedback
-- **Real-time Recognition**: With confidence scoring
-
-#### **demo.py** - CLI Interface
-Command-line tool with modes:
-- `teach`: Train new objects
-- `detect`: Recognize objects
-- `reset`: Clear learned objects
-- `list`: Show known objects
-
-#### **knn_test.py** - Classifier Testing
-Standalone K-NN classifier using ResNet18 embeddings for fruit classification
-
-#### **gemini_vision.py** - Cloud AI Integration
-Google Gemini Vision API for single-word object descriptions
-
-#### **preview_stream.py** - Remote Control Server
-Flask server providing:
-- HTTP endpoints for snapshots
-- Audio recording from RTSP
-- Remote trigger capabilities
-
-#### **yolo_finetune.py** - Model Training
-Template for fine-tuning YOLO models with Ultralytics
-
-## 🎛️ Hardware Setup
-
-### Seeed Studio reCamera
-- **Default IP**: 192.168.42.1
-- **RTSP URL**: rtsp://admin:admin@192.168.42.1:554/live
-- **Node-RED**: http://192.168.42.1:1880
-- **Web Interface**: http://192.168.42.1/#/workplace
-- **Password**: asdf1234!
-
-### Network Configuration
-- **USB-C Connection**: CDC-NCM networking
-- **Alternative Access**: http://192.168.86.28 (when on same network)
-
-## 🤖 AI Models & Technologies
-
-### Computer Vision
-- **YOLO v11**: Real-time object detection (ONNX format)
-- **ResNet18**: Feature extraction for KNN classifier
-- **OpenCV**: Video processing and display
-
-### Machine Learning
-- **scikit-learn**: K-Nearest Neighbors classifier
-- **PyTorch**: Deep learning framework
-
-### AI Annotation System
-- **Google Gemini Vision**: Automatic AI annotations with confidence scoring
-- **Abstract Annotator Architecture**: Pluggable annotation system supporting:
-  - Human annotation via web interface
-  - AI-powered suggestions
-  - Consensus between multiple annotators
-  - Fallback strategies (AI → Human)
-  - Weighted combinations of annotator results
-
-### Audio & Voice
-- **Whisper**: Speech-to-text recognition
-- **edge-tts**: Text-to-speech synthesis
-- **FFmpeg**: Audio/video processing
-
-### Integration
-- **Node-RED**: Visual flow programming
-- **Flask**: HTTP API server
-- **RTSP Protocol**: Real-time streaming
 
 ## 📊 Data Pipeline
 
@@ -238,38 +146,7 @@ https://wiki.seeedstudio.com/recamera_model_conversion#convert-and-quantize-ai-m
 - **Local Network Access**: http://192.168.86.28
 - **reCamera Web Interface**: http://192.168.42.1/#/workplace
 
-## 🔄 Development Timeline
 
-The project shows evolution from simple RTSP testing to a sophisticated AI system:
-1. Basic RTSP streaming tests
-2. YOLO integration for object detection
-3. KNN classifier for custom objects
-4. Voice control implementation
-5. Cloud AI integration (Gemini)
-6. Continuous learning pipeline
-
-## 📝 Recent Activity
-
-- **August 2025**: Active development with 80+ test snapshots
-- Ongoing experimentation with voice commands and object teaching
-- Integration of multiple AI models for robust detection
-
-## 🚦 Future Enhancements
-
-Based on the architecture diagram, planned features include:
-- Automated dataset labeling pipeline
-- Real-time model retraining
-- Improved hand gesture recognition
-- Expanded object categories
-- Enhanced human-in-the-loop annotation
-
-## 📄 License
-
-[Add your license information here]
-
-## 🤝 Contributing
-
-[Add contribution guidelines here]
 
 ---
 
