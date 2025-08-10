@@ -1,0 +1,9 @@
+# Optional dependencies for distributed training with Modal
+# Install with: pip install -r requirements-distributed.txt
+
+# Modal for serverless cloud functions
+modal>=0.56.0
+
+# Additional dependencies for distributed features
+redis>=4.5.0  # For distributed queue management (optional)
+tenacity>=8.2.0  # For retry logic
