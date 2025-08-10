@@ -447,7 +447,7 @@ class IntelligentCaptureSystem:
         window_name = "Intelligent Capture System"
         frame_count = 0
         last_model_reload = time.time()
-        model_reload_interval = 10  # Reload model every 10 seconds
+        model_reload_interval = 30  # Reload model every 30 seconds
         
         try:
             while True:
