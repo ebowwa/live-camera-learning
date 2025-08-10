@@ -404,9 +404,9 @@ class KNNObjectClassifier:
             
     def reset(self):
         """Reset the classifier, removing all training data."""
-        self.X_train = []
-        self.y_train = []
-        self.knn = KNeighborsClassifier(n_neighbors=self.n_neighbors)
+        self.X_train = np.empty((0, self.embedding_dim), dtype=np.float32)
+        self.y_train = np.array([], dtype=object)
+        self.knn = KNeighborsClassifier(n_neighbors=self.n_neighbors, metric='cosine')
         self.trained = False
         logger.info("Classifier reset")
         

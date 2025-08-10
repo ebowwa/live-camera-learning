@@ -10,6 +10,8 @@ logger = logging.getLogger(__name__)
 class YOLODetector:
     """YOLO object detection wrapper for ONNX models."""
     
+    _model_cache = {}
+    
     def __init__(self, model_path: str = "assets/yolo11n.onnx", 
                  conf_threshold: float = 0.5,
                  nms_threshold: float = 0.4):
@@ -45,10 +47,17 @@ class YOLODetector:
         ]
         
     def load_model(self) -> bool:
-        """Load YOLO ONNX model."""
+        """Load YOLO ONNX model with caching."""
         try:
+            # Check if model is already cached
+            if self.model_path in self._model_cache:
+                self.net = self._model_cache[self.model_path]
+                logger.info(f"YOLO model loaded from cache: {self.model_path}")
+                return True
+            
             self.net = cv2.dnn.readNetFromONNX(self.model_path)
-            logger.info(f"YOLO model loaded from {self.model_path}")
+            self._model_cache[self.model_path] = self.net
+            logger.info(f"YOLO model loaded and cached: {self.model_path}")
             return True
         except Exception as e:
             logger.error(f"Failed to load YOLO model: {e}")
