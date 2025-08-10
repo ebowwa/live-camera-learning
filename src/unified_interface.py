@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 class UnifiedEdaxShifu:
     """Single interface for everything - stream, capture, annotate, teach."""
     
-    def __init__(self, rtsp_url: str = "0", model_path: str = "models/knn_classifier.pkl"):
+    def __init__(self, rtsp_url: str = "0", model_path: str = "models/knn_classifier.npz"):
         """Initialize the unified system."""
         self.rtsp_url = rtsp_url
         

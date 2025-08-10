@@ -9,7 +9,6 @@ from PIL import Image
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 import cv2
-import pickle
 import os
 from typing import Optional, Dict, List, Tuple, Any
 import logging
@@ -52,7 +51,7 @@ class KNNObjectClassifier:
         """
         self.n_neighbors = n_neighbors
         self.confidence_threshold = confidence_threshold
-        self.model_path = model_path or "models/knn_classifier.pkl"
+        self.model_path = model_path or "models/knn_classifier.npz"
         self.max_samples_per_class = max_samples_per_class
         self.embedding_dim = embedding_dim
         
@@ -371,12 +370,7 @@ class KNNObjectClassifier:
         with self._lock:
             load_path = path or self.model_path
             
-            # Try both .npz and .pkl formats for compatibility
             if not os.path.exists(load_path):
-                # Try .pkl for backward compatibility
-                pkl_path = load_path.replace('.npz', '.pkl')
-                if os.path.exists(pkl_path):
-                    return self._load_pkl_model(pkl_path)
                 logger.info(f"No saved model found at {load_path}")
                 return False
                 
@@ -407,27 +401,6 @@ class KNNObjectClassifier:
                 logger.error(f"Error loading model: {e}")
                 return False
     
-    def _load_pkl_model(self, path: str) -> bool:
-        """Load legacy pickle model format."""
-        try:
-            with open(path, 'rb') as f:
-                model_data = pickle.load(f)
-                
-            # Convert to numpy arrays
-            self.X_train = np.array(model_data['X_train'], dtype=np.float32)
-            self.y_train = np.array(model_data['y_train'], dtype=object)
-            self.n_neighbors = model_data.get('n_neighbors', self.n_neighbors)
-            self.confidence_threshold = model_data.get('confidence_threshold', self.confidence_threshold)
-            
-            if len(self.X_train) > 0:
-                self._retrain_knn()
-                
-            logger.info(f"Legacy model loaded from {path}. {len(self.X_train)} samples")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Error loading legacy model: {e}")
-            return False
             
     def reset(self):
         """Reset the classifier, removing all training data."""

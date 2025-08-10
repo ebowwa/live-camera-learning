@@ -44,7 +44,7 @@ class IntelligentCaptureSystem:
     def __init__(self,
                  rtsp_url: str,
                  yolo_model_path: str = "assets/yolo11n.onnx",
-                 knn_model_path: str = "models/knn_classifier.pkl",
+                 knn_model_path: str = "models/knn_classifier.npz",
                  capture_dir: str = "intelligent_captures",
                  confidence_threshold: float = 0.7,
                  enable_live_learning: bool = True):

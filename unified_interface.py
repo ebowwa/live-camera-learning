@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 class UnifiedEdaxShifu:
     """Single interface for everything - stream, capture, annotate, teach."""
     
-    def __init__(self, rtsp_url: str = "0", model_path: str = "models/knn_classifier.pkl"):
+    def __init__(self, rtsp_url: str = "0", model_path: str = "models/knn_classifier.npz"):
         """Initialize the unified system."""
         self.rtsp_url = rtsp_url
         
@@ -142,10 +142,10 @@ class UnifiedEdaxShifu:
         
         return display_frame
     
-    def capture_frame(self) -> Tuple[Optional[Image.Image], str]:
+    def capture_frame(self) -> Tuple[Optional[Image.Image], Optional[Image.Image], str]:
         """Capture current frame for annotation."""
         if self.current_frame is None:
-            return None, "No frame available"
+            return None, None, "No frame available"
         
         # Save capture
         self.last_capture = self.current_frame.copy()
