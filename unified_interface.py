@@ -25,6 +25,7 @@ from src.intelligent_capture import IntelligentCaptureSystem
 from src.knn_classifier import AdaptiveKNNClassifier
 from src.annotators import AnnotatorFactory, AnnotationRequest
 from src.annotators.bbox_utils import draw_bounding_boxes, crop_object_from_bbox, crop_all_objects
+from src.hand_detector import HandDetector
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -67,8 +68,40 @@ class UnifiedEdaxShifu:
             'captures': 0,
             'taught': 0,
             'annotations': 0,
-            'ai_annotations': 0
+            'ai_annotations': 0,
+            'hands_detected': 0,
+            'gestures_recognized': 0
         }
+        
+        # Initialize hand detector
+        self.hand_detector = HandDetector(
+            max_num_hands=2,
+            min_detection_confidence=0.5,
+            min_tracking_confidence=0.5
+        )
+        
+        # Detection methods (what objects are)
+        self.detection_modes = {
+            'yolo': True,  # YOLO object detection
+            'knn': True,   # KNN classification
+        }
+        
+        # Triggers/Controls (actions to take)
+        self.triggers = {
+            'hand_gestures': False,  # Hand gesture triggers
+            'auto_capture': False,   # Auto capture on detection
+        }
+        
+        # Gesture mappings
+        self.gesture_actions = {
+            'peace': 'capture',
+            'thumbs_up': 'teach',
+            'fist': 'stop',
+            'open_palm': 'start',
+            'pointing': 'select'
+        }
+        
+        logger.info("Detection and trigger systems initialized")
         
         # Initialize Gemini annotator
         self.gemini_annotator = None
@@ -82,7 +115,7 @@ class UnifiedEdaxShifu:
             logger.warning(f"Failed to initialize Gemini annotator: {e}")
         
     def get_frame(self) -> Optional[np.ndarray]:
-        """Get the current frame with YOLO detections and KNN recognition."""
+        """Get the current frame with YOLO detections, KNN recognition, and hand detection."""
         # Read frame from stream
         ret, frame = self.system.stream.read_frame()
         if not ret or frame is None:
@@ -92,10 +125,75 @@ class UnifiedEdaxShifu:
         self.current_frame = frame
         display_frame = frame.copy()
         
-        # Run YOLO detection
-        detections = self.system.yolo.detect(frame)
+        # Process hand gestures as triggers if enabled
+        if self.triggers.get('hand_gestures', False):
+            hand_detections = self.hand_detector.detect(frame)
+            
+            for hand in hand_detections:
+                # Draw hand landmarks and connections
+                display_frame = self.hand_detector.draw_landmarks(
+                    display_frame, hand,
+                    draw_connections=True,
+                    draw_landmarks=True,
+                    draw_bounding_box=True,
+                    landmark_color=(0, 255, 0),
+                    connection_color=(0, 255, 255),
+                    bbox_color=(255, 0, 255)
+                )
+                
+                # Detect gesture and trigger action
+                gesture = self.hand_detector.detect_gesture(hand)
+                if gesture:
+                    self.stats['gestures_recognized'] += 1
+                    
+                    # Get action for this gesture
+                    action = self.gesture_actions.get(gesture, None)
+                    
+                    # Display gesture and action
+                    if hand.bounding_box:
+                        x, y, w, h = hand.bounding_box
+                        if action:
+                            text = f"Gesture: {gesture} → {action.upper()}"
+                            color = (0, 255, 255)  # Yellow for actionable
+                        else:
+                            text = f"Gesture: {gesture}"
+                            color = (255, 255, 0)  # Cyan for info only
+                        cv2.putText(display_frame, text, 
+                                   (x, y + h + 20), cv2.FONT_HERSHEY_SIMPLEX, 
+                                   0.6, color, 2)
+                    
+                    # Execute trigger action (we'll implement this later)
+                    if action == 'capture':
+                        # Would trigger capture here
+                        pass
+            
+            if hand_detections:
+                self.stats['hands_detected'] += len(hand_detections)
         
-        # Process each detection
+        # Run YOLO detection if enabled
+        detections = []
+        if self.detection_modes.get('yolo', True):
+            detections = self.system.yolo.detect(frame)
+        
+        # If KNN is enabled but YOLO is not, run KNN on full frame
+        if self.detection_modes.get('knn', True) and not self.detection_modes.get('yolo', True):
+            # Run KNN on the entire frame
+            full_frame_recognition = self.system.knn.predict(frame)
+            
+            # Display result in corner
+            if full_frame_recognition and full_frame_recognition.is_known:
+                text = f"Frame: {full_frame_recognition.label} ({full_frame_recognition.confidence:.2f})"
+                color = (0, 255, 0)
+            else:
+                text = "Frame: Unknown"
+                color = (0, 0, 255)
+            
+            # Add background for text
+            cv2.rectangle(display_frame, (10, 60), (400, 90), (0, 0, 0), -1)
+            cv2.putText(display_frame, text, (15, 80), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
+        
+        # Process each YOLO detection with KNN if both are enabled
         for det in detections:
             bbox = det.get('bbox', [])
             if len(bbox) == 4:
@@ -103,9 +201,11 @@ class UnifiedEdaxShifu:
                 
                 # Crop the detected object for KNN
                 crop = frame[y:y+h, x:x+w]
-                if crop.size > 0:
+                if crop.size > 0 and self.detection_modes.get('knn', True):
                     # Run KNN classification on the crop
                     recognition = self.system.knn.predict(crop)
+                else:
+                    recognition = None
                     
                     # Determine color and label based on recognition
                     if recognition and recognition.is_known:
@@ -130,7 +230,12 @@ class UnifiedEdaxShifu:
         
         # Add status overlay
         classes = self.system.knn.get_known_classes()
-        status_text = f"Known: {len(classes)} classes | Objects detected: {len(detections)}"
+        active_detection = [name.upper() for name, enabled in self.detection_modes.items() if enabled]
+        active_triggers = [name.replace('_', ' ').title() for name, enabled in self.triggers.items() if enabled]
+        
+        status_text = f"Detection: {', '.join(active_detection) if active_detection else 'None'}"
+        if active_triggers:
+            status_text += f" | Triggers: {', '.join(active_triggers)}"
         cv2.putText(display_frame, status_text, (10, 30), 
                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         
@@ -151,6 +256,19 @@ class UnifiedEdaxShifu:
         self.last_capture = self.current_frame.copy()
         self.stats['captures'] += 1
         
+        # Check if hand gestures are being tracked
+        hand_info = ""
+        if self.triggers.get('hand_gestures', False):
+            hand_detections = self.hand_detector.detect(self.last_capture)
+            if hand_detections:
+                gestures = []
+                for hand in hand_detections:
+                    gesture = self.hand_detector.detect_gesture(hand)
+                    if gesture:
+                        gestures.append(f"{hand.handedness} hand: {gesture}")
+                if gestures:
+                    hand_info = f" | 🖐 {', '.join(gestures)}"
+        
         # Run KNN classification on the captured frame
         recognition = self.system.knn.predict(self.last_capture)
         
@@ -161,7 +279,7 @@ class UnifiedEdaxShifu:
             save_dir = "captures/successful"
             os.makedirs(save_dir, exist_ok=True)
             filename = f"{timestamp}_{recognition.label}.jpg"
-            msg = f"✅ Recognized: {recognition.label} ({recognition.confidence:.2f})"
+            msg = f"✅ Recognized: {recognition.label} ({recognition.confidence:.2f}){hand_info}"
         else:
             # Unknown object - try AI annotation if available
             ai_suggestion = ""
@@ -200,7 +318,7 @@ class UnifiedEdaxShifu:
             save_dir = "captures/failed"
             os.makedirs(save_dir, exist_ok=True)
             filename = f"{timestamp}_unknown.jpg"
-            msg = f"❌ Unknown object{ai_suggestion} - teach below or use AI suggestion"
+            msg = f"❌ Unknown object{ai_suggestion}{hand_info} - teach below or use AI suggestion"
         
         # Save the image
         save_path = os.path.join(save_dir, filename)
@@ -283,13 +401,21 @@ class UnifiedEdaxShifu:
         classes = self.system.knn.get_known_classes()
         ai_status = "🟢 Available" if (self.gemini_annotator and self.gemini_annotator.is_available()) else "🔴 Not available"
         
+        # Show active detection and triggers
+        active_detection = [name.upper() for name, enabled in self.detection_modes.items() if enabled]
+        active_triggers = [name.replace('_', ' ').title() for name, enabled in self.triggers.items() if enabled]
+        
         return f"""📊 Statistics:
+• Detection: {', '.join(active_detection) if active_detection else 'None'}
+• Triggers: {', '.join(active_triggers) if active_triggers else 'None'}
 • Known classes: {len(classes)}
 • Total samples: {len(self.system.knn.X_train) if self.system.knn.X_train is not None else 0}
 • Captures: {self.stats['captures']}
 • Taught: {self.stats['taught']}
 • AI annotations: {self.stats['ai_annotations']}
 • AI status: {ai_status}
+• Hands detected: {self.stats['hands_detected']}
+• Gestures: {self.stats['gestures_recognized']}
 • Classes: {', '.join(classes[:5])}{'...' if len(classes) > 5 else ''}"""
     
     def create_interface(self) -> gr.Blocks:
@@ -322,6 +448,42 @@ class UnifiedEdaxShifu:
                         stream_btn = gr.Button("🎥 Start Stream", variant="primary")
                         capture_btn = gr.Button("📸 Capture", variant="secondary")
                         stop_btn = gr.Button("⏹ Stop")
+                    
+                    # Detection controls
+                    with gr.Row():
+                        with gr.Column():
+                            gr.Markdown("**🔍 Detection Modes:**")
+                            detection_selector = gr.CheckboxGroup(
+                                choices=[
+                                    ("YOLO Object Detection", "yolo"),
+                                    ("KNN Classification", "knn"),
+                                ],
+                                value=["yolo", "knn"],  # Default: both enabled
+                                label="Object Detection",
+                                info="How to identify objects"
+                            )
+                        
+                        with gr.Column():
+                            gr.Markdown("**🎮 Triggers & Controls:**")
+                            trigger_selector = gr.CheckboxGroup(
+                                choices=[
+                                    ("Hand Gestures", "hand_gestures"),
+                                    ("Auto Capture", "auto_capture"),
+                                ],
+                                value=[],  # Default: no triggers
+                                label="Action Triggers",
+                                info="Automatic actions"
+                            )
+                            
+                            # Show gesture mappings
+                            gr.Markdown("""
+                            **Gesture Actions:**
+                            - ✌️ Peace → Capture
+                            - 👍 Thumbs Up → Teach
+                            - ✊ Fist → Stop
+                            - 🖐 Open Palm → Start
+                            - 👉 Pointing → Select
+                            """)
                     
                     # Captured image displays
                     with gr.Row():
@@ -461,6 +623,38 @@ class UnifiedEdaxShifu:
                 outputs=[captured_img, annotated_img, capture_status]
             )
             
+            # Detection mode selector handler
+            def update_detection_modes(selected_modes):
+                """Update active detection methods."""
+                self.detection_modes['yolo'] = 'yolo' in selected_modes
+                self.detection_modes['knn'] = 'knn' in selected_modes
+                
+                active = [m.upper() for m in selected_modes]
+                status = f"🔍 Detection: {', '.join(active)}" if active else "⚠️ No detection enabled"
+                return status, self.get_stats()
+            
+            detection_selector.change(
+                update_detection_modes,
+                inputs=[detection_selector],
+                outputs=[capture_status, stats_display]
+            )
+            
+            # Trigger selector handler
+            def update_triggers(selected_triggers):
+                """Update active triggers."""
+                self.triggers['hand_gestures'] = 'hand_gestures' in selected_triggers
+                self.triggers['auto_capture'] = 'auto_capture' in selected_triggers
+                
+                active = [t.replace('_', ' ').title() for t in selected_triggers]
+                status = f"🎮 Triggers: {', '.join(active)}" if active else "No triggers active"
+                return status, self.get_stats()
+            
+            trigger_selector.change(
+                update_triggers,
+                inputs=[trigger_selector],
+                outputs=[capture_status, stats_display]
+            )
+            
             # Use last capture button - loads captured image into teach interface
             use_capture_btn.click(
                 self.get_last_capture_as_pil,
@@ -593,6 +787,11 @@ class UnifiedEdaxShifu:
             )
         
         return interface
+    
+    def __del__(self):
+        """Cleanup resources when object is destroyed."""
+        if hasattr(self, 'hand_detector'):
+            self.hand_detector.release()
 
 
 def main():
