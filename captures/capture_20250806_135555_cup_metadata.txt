@@ -1,5 +1,0 @@
-Timestamp: 20250806_135555
-Detections:
-  - cup: 0.536
-    BBox: [483, 609, 58, 29]
-    Holding: True

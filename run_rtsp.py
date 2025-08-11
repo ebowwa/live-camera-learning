@@ -37,12 +37,12 @@ def check_rtsp_url(url):
 def setup_directories():
     """Ensure all required directories exist."""
     dirs = [
-        "captures/successful",
-        "captures/failed",
-        "captures/dataset",
-        "intelligent_captures",
-        "models",
-        "assets/images"
+        "python/data/captures/successful",
+        "python/data/captures/failed",
+        "python/data/captures/dataset",
+        "python/data/intelligent_captures",
+        "python/models",
+        "python/assets/images"
     ]
     
     for dir_path in dirs:
@@ -107,9 +107,9 @@ def run_rtsp_system(rtsp_url, headless=False, skip_annotation=False):
             sys.executable, "main.py",
             "--mode", "intelligent",
             "--url", rtsp_url,
-            "--model-path", "assets/yolo11n.onnx",
-            "--capture-dir", "captures",
-            "--training-dir", "assets/images"
+            "--model-path", "python/assets/yolo11n.onnx",
+            "--capture-dir", "python/data/captures",
+            "--training-dir", "python/assets/images"
         ]
         
         if headless:

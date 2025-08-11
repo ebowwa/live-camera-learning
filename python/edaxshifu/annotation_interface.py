@@ -55,7 +55,7 @@ class AnnotationTask:
 class AnnotationQueue:
     """Manages the queue of images waiting for annotation."""
     
-    def __init__(self, failed_dir: str = "captures/failed", processed_dir: str = "captures/processed"):
+    def __init__(self, failed_dir: str = "python/data/captures/failed", processed_dir: str = "python/data/captures/processed"):
         self.failed_dir = failed_dir
         self.processed_dir = processed_dir
         self.queue = queue.Queue()
@@ -950,9 +950,9 @@ class HumanAnnotationInterface:
                     raise e
 
 
-def create_annotation_app(knn_model_path: str = "models/knn_classifier.pkl", 
-                         failed_dir: str = "captures/failed",
-                         dataset_dir: str = "captures/dataset",
+def create_annotation_app(knn_model_path: str = "python/models/knn_classifier.pkl", 
+                         failed_dir: str = "python/data/captures/failed",
+                         dataset_dir: str = "python/data/captures/dataset",
                          use_ai_annotator: bool = True,
                          annotator_preset: str = "ai_first"):
     """Create and launch the enhanced annotation application."""

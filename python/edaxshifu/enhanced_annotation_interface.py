@@ -48,8 +48,8 @@ class EnhancedAnnotationInterface:
     
     def __init__(self, 
                  knn_classifier: Optional[AdaptiveKNNClassifier] = None,
-                 failed_dir: str = "captures/failed",
-                 dataset_dir: str = "captures/dataset",
+                 failed_dir: str = "python/data/captures/failed",
+                 dataset_dir: str = "python/data/captures/dataset",
                  annotator_config: Optional[Dict[str, Any]] = None):
         """
         Initialize the enhanced annotation interface.
@@ -559,9 +559,9 @@ class EnhancedAnnotationInterface:
         )
 
 
-def create_enhanced_annotation_app(knn_model_path: str = "models/knn_classifier.pkl",
-                                 failed_dir: str = "captures/failed", 
-                                 dataset_dir: str = "captures/dataset",
+def create_enhanced_annotation_app(knn_model_path: str = "python/models/knn_classifier.pkl",
+                                 failed_dir: str = "python/data/captures/failed", 
+                                 dataset_dir: str = "python/data/captures/dataset",
                                  annotator_preset: str = "ai_first"):
     """Create enhanced annotation application."""
     # Load KNN classifier if available

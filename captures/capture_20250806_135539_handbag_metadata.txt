@@ -1,5 +1,0 @@
-Timestamp: 20250806_135539
-Detections:
-  - handbag: 0.512
-    BBox: [497, 525, 141, 114]
-    Holding: True

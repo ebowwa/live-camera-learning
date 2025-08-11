@@ -73,12 +73,19 @@ edaxshifu/
 ├── main.py                 # Main entry point with CLI arguments
 ├── src/
 │   └── rtsp_stream.py     # Refactored RTSP streaming classes
-├── deprecated/            # Previous implementations (see below)
-├── images/               # Training samples
-├── snapshots/           # Captured frames (80+ images)
-├── flows.json           # Node-RED visual programming
-├── yolo11n.onnx        # YOLO v11 model
-└── recamera-user-manual.pdf
+├── python/               # Python implementation
+│   ├── deprecated/       # Previous implementations
+│   ├── assets/          # Python-specific assets
+│   │   ├── images/      # Training samples
+│   │   └── snapshots/   # Captured frames (80+ images)
+│   ├── data/            # Runtime data
+│   │   ├── captures/    # Live capture data
+│   │   ├── intelligent_captures/  # Intelligent capture metadata
+│   │   └── flows.json   # Node-RED visual programming
+│   └── models/          # KNN model storage
+├── swift/               # Swift implementation
+└── assets/              # Shared documentation
+    └── recamera-user-manual.pdf
 ```
 
 
@@ -102,7 +109,7 @@ edaxshifu/
    - Routes to success/failure paths based on confidence
 
 4. **Enhanced AI+Human Annotation**:
-   - Failed recognitions saved to `captures/failed/`
+   - Failed recognitions saved to `python/data/captures/failed/`
    - Enhanced Gradio interface at http://localhost:7860 with:
      - 🤖 **AI Suggestions**: Gemini Vision provides instant annotations
      - 👤 **Human Override**: Users can accept/reject/modify AI suggestions
@@ -113,12 +120,12 @@ edaxshifu/
    - AI annotations provide fast initial labeling
    - Human annotations ensure high-quality training data
    - Model improves from both AI and human feedback
-   - Dataset grows in `captures/dataset/` with source tracking
+   - Dataset grows in `python/data/captures/dataset/` with source tracking
    - Real-time model updates after each annotation
 
 ### Directory Structure
 ```
-captures/
+python/data/captures/
 ├── successful/    # Recognized objects
 ├── failed/        # Unknown objects for annotation
 └── dataset/       # Growing labeled dataset

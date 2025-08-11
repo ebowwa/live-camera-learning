@@ -12,7 +12,7 @@ class YOLODetector:
     
     _model_cache = {}
     
-    def __init__(self, model_path: str = "assets/yolo11n.onnx", 
+    def __init__(self, model_path: str = "python/assets/yolo11n.onnx", 
                  conf_threshold: float = 0.5,
                  nms_threshold: float = 0.4):
         """

@@ -23,13 +23,13 @@ def test_rtsp_capture():
     
     system = IntelligentCaptureSystem(
         rtsp_url=rtsp_url,
-        yolo_model_path="assets/yolo11n.onnx",
-        capture_dir="captures",
+        yolo_model_path="python/assets/yolo11n.onnx",
+        capture_dir="python/data/captures",
         confidence_threshold=0.5
     )
     
     # Load any existing training samples
-    training_dir = "assets/images"
+    training_dir = "python/assets/images"
     if os.path.exists(training_dir):
         print(f"Loading training samples from {training_dir}")
         system.knn.add_samples_from_directory(training_dir)
@@ -62,7 +62,7 @@ def test_annotation_interface():
     from python.edaxshifu.annotation_interface import AnnotationInterface
     
     # Check if there are failed captures to annotate
-    failed_dir = Path("captures/failed")
+    failed_dir = Path("python/data/captures/failed")
     if not failed_dir.exists():
         print("No failed directory found. Creating test data...")
         failed_dir.mkdir(parents=True, exist_ok=True)
@@ -97,7 +97,7 @@ def test_annotation_interface():
         print("Press Ctrl+C to stop\n")
         
         interface = AnnotationInterface(
-            failed_dir="captures/failed",
+            failed_dir="python/data/captures/failed",
             knn_classifier=None  # Will create new one if needed
         )
         

@@ -6,7 +6,7 @@ import numpy as np
 
 def debug_yolo_model():
     # Load and inspect the YOLO model
-    net = cv2.dnn.readNetFromONNX("assets/yolo11n.onnx")
+    net = cv2.dnn.readNetFromONNX("python/assets/yolo11n.onnx")
     
     # Get layer names
     layer_names = net.getLayerNames()

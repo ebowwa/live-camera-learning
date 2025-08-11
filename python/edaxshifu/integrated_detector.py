@@ -18,8 +18,8 @@ class IntegratedDetector:
     
     def __init__(self, 
                  rtsp_url: str,
-                 yolo_model_path: str = "assets/yolo11n.onnx",
-                 capture_dir: str = "captures",
+                 yolo_model_path: str = "python/assets/yolo11n.onnx",
+                 capture_dir: str = "python/data/captures",
                  conf_threshold: float = 0.5,
                  capture_cooldown: float = 2.0):
         """

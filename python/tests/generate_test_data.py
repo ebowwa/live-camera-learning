@@ -14,7 +14,7 @@ def create_test_images():
     """Create test images in the failed directory."""
     
     # Create directories
-    failed_dir = "intelligent_captures/failed"
+    failed_dir = "python/data/intelligent_captures/failed"
     os.makedirs(failed_dir, exist_ok=True)
     
     # Generate some test images

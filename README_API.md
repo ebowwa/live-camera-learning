@@ -130,7 +130,7 @@ python api_server.py --help
 Options:
 - `--host`: Host to bind to (default: 0.0.0.0)
 - `--port`: Port to bind to (default: 8000)
-- `--model-path`: Path to KNN model file (default: models/knn_classifier.npz)
+- `--model-path`: Path to KNN model file (default: python/models/knn_classifier.npz)
 - `--reload`: Enable auto-reload for development
 
 ## Network Access
@@ -155,7 +155,7 @@ ipconfig
 
 The API server works alongside the existing EdaxShifu system:
 
-1. **Model sharing**: Uses the same `models/knn_classifier.npz` file
+1. **Model sharing**: Uses the same `python/models/knn_classifier.npz` file
 2. **Live updates**: Use `/model/reload` endpoint after training new objects
 3. **Parallel operation**: Can run simultaneously with the Gradio interface
 

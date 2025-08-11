@@ -36,7 +36,7 @@ class AnnotatorFactory:
                 'name': 'human_expert',
                 'interactive_mode': True,
                 'timeout_seconds': 300,
-                'dataset_dir': 'captures/dataset'
+                'dataset_dir': 'python/data/captures/dataset'
             }
         """
         config = config or {}
@@ -44,8 +44,8 @@ class AnnotatorFactory:
         return HumanAnnotator(
             name=config.get('name', 'human'),
             knn_classifier=config.get('knn_classifier'),
-            failed_dir=config.get('failed_dir', 'captures/failed'),
-            dataset_dir=config.get('dataset_dir', 'captures/dataset'),
+            failed_dir=config.get('failed_dir', 'python/data/captures/failed'),
+            dataset_dir=config.get('dataset_dir', 'python/data/captures/dataset'),
             interactive_mode=config.get('interactive_mode', False),
             timeout_seconds=config.get('timeout_seconds', 300.0)
         )

@@ -6,7 +6,7 @@ import numpy as np
 
 def test_with_real_image():
     # Load the apple image
-    img = cv2.imread("assets/images/apple1.png")
+    img = cv2.imread("python/assets/images/apple1.png")
     if img is None:
         print("Could not load image")
         return
@@ -14,7 +14,7 @@ def test_with_real_image():
     print(f"Original image shape: {img.shape}")
     
     # Load model
-    net = cv2.dnn.readNetFromONNX("assets/yolo11n.onnx")
+    net = cv2.dnn.readNetFromONNX("python/assets/yolo11n.onnx")
     
     # Preprocess - this is critical!
     # YOLOv11 expects RGB input, normalized to [0,1]

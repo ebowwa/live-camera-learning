@@ -24,9 +24,9 @@ def check_live_system():
     
     # Check directories
     dirs = {
-        "Failed": "captures/failed",
-        "Processed": "captures/processed",
-        "Dataset": "captures/dataset"
+        "Failed": "python/data/captures/failed",
+        "Processed": "python/data/captures/processed",
+        "Dataset": "python/data/captures/dataset"
     }
     
     for name, path in dirs.items():
@@ -38,7 +38,7 @@ def check_live_system():
             os.makedirs(path, exist_ok=True)
     
     # Check model
-    model_path = "models/knn_classifier.pkl"
+    model_path = "python/models/knn_classifier.pkl"
     if os.path.exists(model_path):
         print(f"✓ Model exists: {model_path}")
         
@@ -62,7 +62,7 @@ def check_live_system():
     print("\n3. CAPTURE UNKNOWN OBJECTS:")
     print("   - Point camera at unknown objects")
     print("   - Press 's' to manually capture")
-    print("   - Failed recognitions go to captures/failed/")
+    print("   - Failed recognitions go to python/data/captures/failed/")
     print("\n4. ANNOTATE IN GRADIO:")
     print("   - Interface auto-refreshes every 5 seconds")
     print("   - Label unknown objects")

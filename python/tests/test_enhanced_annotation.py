@@ -21,9 +21,9 @@ def main():
     
     try:
         app = create_annotation_app(
-            knn_model_path="models/knn_classifier.pkl",
-            failed_dir="captures/failed", 
-            dataset_dir="captures/dataset",
+            knn_model_path="python/models/knn_classifier.pkl",
+            failed_dir="python/data/captures/failed", 
+            dataset_dir="python/data/captures/dataset",
             use_ai_annotator=True,
             annotator_preset="ai_first"
         )
