@@ -25,4 +25,4 @@ else:
     print("❌ Failed to export model")
 
 print("\nYou can now run the application with:")
-print("  uv run main.py --url 0")
+print("  cd python && uv run python main.py --url 0")

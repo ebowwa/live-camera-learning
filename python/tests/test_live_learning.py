@@ -56,7 +56,7 @@ def check_live_system():
     print("LIVE LEARNING WORKFLOW:")
     print("=" * 60)
     print("\n1. START CAPTURE SYSTEM:")
-    print("   uv run main.py --mode intelligent --url 0")
+    print("   cd python && uv run python main.py --mode intelligent --url 0")
     print("\n2. START ANNOTATION INTERFACE:")
     print("   uv run annotate.py")
     print("\n3. CAPTURE UNKNOWN OBJECTS:")

@@ -39,14 +39,14 @@ The system creates an intelligent feedback loop where:
 ### Main Application (Recommended)
 ```bash
 # Run with webcam (most common)
-uv run main.py --url 0
+cd python && uv run python main.py --url 0
 
 # Run with RTSP camera
-uv run main.py --url "rtsp://your-camera-url"
+cd python && uv run python main.py --url "rtsp://your-camera-url"
 
 # Examples:
-uv run main.py --url "rtsp://admin:admin@192.168.42.1:554/live"  # reCamera
-uv run main.py --url "rtsp://192.168.1.100:554/stream1"         # Generic IP cam
+cd python && uv run python main.py --url "rtsp://admin:admin@192.168.42.1:554/live"  # reCamera
+cd python && uv run python main.py --url "rtsp://192.168.1.100:554/stream1"         # Generic IP cam
 ```
 
 ### Enhanced AI+Human Annotation Features
@@ -61,7 +61,7 @@ uv run main.py --url "rtsp://192.168.1.100:554/stream1"         # Generic IP cam
 export GEMINI_API_KEY="your-gemini-api-key-here"
 
 # Run with AI annotations enabled
-uv run main.py --url 0
+cd python && uv run python main.py --url 0
 ```
 
 Without the API key, the system falls back to human-only annotation mode.
@@ -70,21 +70,24 @@ Without the API key, the system falls back to human-only annotation mode.
 ### Project Structure
 ```
 edaxshifu/
-├── main.py                 # Main entry point with CLI arguments
-├── src/
-│   └── rtsp_stream.py     # Refactored RTSP streaming classes
 ├── python/               # Python implementation
+│   ├── main.py           # Main entry point with CLI arguments
+│   ├── api_server.py     # API server
+│   ├── unified_interface.py  # Web interface
+│   ├── edaxshifu/        # Core package
+│   ├── examples/         # Python examples
+│   ├── tests/            # Python tests
 │   ├── deprecated/       # Previous implementations
-│   ├── assets/          # Python-specific assets
-│   │   ├── images/      # Training samples
-│   │   └── snapshots/   # Captured frames (80+ images)
-│   ├── data/            # Runtime data
-│   │   ├── captures/    # Live capture data
+│   ├── assets/           # Python-specific assets
+│   │   ├── images/       # Training samples
+│   │   └── snapshots/    # Captured frames (80+ images)
+│   ├── data/             # Runtime data
+│   │   ├── captures/     # Live capture data
 │   │   ├── intelligent_captures/  # Intelligent capture metadata
-│   │   └── flows.json   # Node-RED visual programming
-│   └── models/          # KNN model storage
-├── swift/               # Swift implementation
-└── assets/              # Shared documentation
+│   │   └── flows.json    # Node-RED visual programming
+│   └── models/           # KNN model storage
+├── swift/                # Swift implementation
+└── assets/               # Shared documentation
     └── recamera-user-manual.pdf
 ```
 
