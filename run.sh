@@ -24,4 +24,4 @@ echo ""
 
 # Run the integrated system
 echo "Starting complete system..."
-uv run python main.py --mode intelligent --url "$URL"
+uv run python python/main.py --mode intelligent --url "$URL"
