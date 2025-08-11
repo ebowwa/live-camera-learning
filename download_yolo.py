@@ -19,8 +19,8 @@ model.export(format='onnx', imgsz=640, simplify=True)
 # Move the exported model to assets folder
 import shutil
 if os.path.exists('yolov8n.onnx'):
-    shutil.move('yolov8n.onnx', 'assets/yolo11n.onnx')
-    print("✅ Model saved to assets/yolo11n.onnx")
+    shutil.move('yolov8n.onnx', 'python/assets/yolo11n.onnx')
+    print("✅ Model saved to python/assets/yolo11n.onnx")
 else:
     print("❌ Failed to export model")
 

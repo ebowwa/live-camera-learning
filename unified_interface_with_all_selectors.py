@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 class UnifiedEdaxShifu:
     """Single interface for everything - stream, capture, annotate, teach."""
     
-    def __init__(self, rtsp_url: str = "0", model_path: str = "models/knn_classifier.npz", 
+    def __init__(self, rtsp_url: str = "0", model_path: str = "python/models/knn_classifier.npz", 
                  cloud_api_url: str = "http://localhost:8000"):
         """Initialize the unified system."""
         self.rtsp_url = rtsp_url
@@ -47,14 +47,14 @@ class UnifiedEdaxShifu:
         # Initialize capture system
         self.system = IntelligentCaptureSystem(
             rtsp_url=rtsp_url,
-            yolo_model_path="assets/yolo11n.onnx",
-            capture_dir="captures",
+            yolo_model_path="python/assets/yolo11n.onnx",
+            capture_dir="python/data/captures",
             confidence_threshold=0.5
         )
         
         # Load training samples
-        if os.path.exists("assets/images"):
-            self.system.knn.add_samples_from_directory("assets/images")
+        if os.path.exists("python/assets/images"):
+            self.system.knn.add_samples_from_directory("python/assets/images")
             logger.info(f"Loaded training samples")
         
         # Stream state
@@ -321,7 +321,7 @@ class UnifiedEdaxShifu:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         if recognition and recognition.is_known:
             # Save to successful
-            save_dir = "captures/successful"
+            save_dir = "python/data/captures/successful"
             os.makedirs(save_dir, exist_ok=True)
             filename = f"{timestamp}_{recognition.label}.jpg"
             msg = f"✅ Recognized: {recognition.label} ({recognition.confidence:.2f})"
@@ -360,7 +360,7 @@ class UnifiedEdaxShifu:
                     logger.error(f"AI annotation failed: {e}")
             
             # Save to failed for annotation
-            save_dir = "captures/failed"
+            save_dir = "python/data/captures/failed"
             os.makedirs(save_dir, exist_ok=True)
             filename = f"{timestamp}_unknown.jpg"
             msg = f"❌ Unknown object{ai_suggestion} - teach below or use AI suggestion"

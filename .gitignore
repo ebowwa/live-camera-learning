@@ -40,7 +40,7 @@ build/
 
 # Images (if you want to keep some, be selective)
 assets/snapshots/
-captures/
+python/data/captures/
 *.jpg
 *.jpeg
 *.png

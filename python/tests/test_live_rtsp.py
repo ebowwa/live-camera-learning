@@ -19,8 +19,8 @@ def test_rtsp_flow():
     
     system = IntelligentCaptureSystem(
         rtsp_url=rtsp_url,
-        yolo_model_path="assets/yolo11n.onnx",
-        capture_dir="captures",
+        yolo_model_path="python/assets/yolo11n.onnx",
+        capture_dir="python/data/captures",
         confidence_threshold=0.5
     )
     
@@ -29,7 +29,7 @@ def test_rtsp_flow():
     print("1. Capture from RTSP/webcam")
     print("2. Run YOLO detection")
     print("3. Attempt KNN classification")
-    print("4. Save failed recognitions to captures/failed/")
+    print("4. Save failed recognitions to python/data/captures/failed/")
     print("5. These can then be annotated via the Gradio interface")
     print("\nPress 's' to manually trigger a capture")
     print("Press ESC to exit\n")

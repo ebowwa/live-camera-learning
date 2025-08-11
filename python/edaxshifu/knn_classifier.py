@@ -51,7 +51,7 @@ class KNNObjectClassifier:
         """
         self.n_neighbors = n_neighbors
         self.confidence_threshold = confidence_threshold
-        self.model_path = model_path or "models/knn_classifier.npz"
+        self.model_path = model_path or "python/models/knn_classifier.npz"
         self.max_samples_per_class = max_samples_per_class
         self.embedding_dim = embedding_dim
         

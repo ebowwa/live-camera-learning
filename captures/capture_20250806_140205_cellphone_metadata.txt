@@ -1,5 +1,0 @@
-Timestamp: 20250806_140205
-Detections:
-  - cell phone: 0.753
-    BBox: [896, 609, 187, 67]
-    Holding: True

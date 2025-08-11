@@ -39,8 +39,8 @@ class HumanAnnotator(BaseAnnotator):
         self.interactive_mode = interactive_mode
         # Store optional parameters but don't use them in CLI mode
         self.knn_classifier = kwargs.get('knn_classifier')
-        self.failed_dir = kwargs.get('failed_dir', 'captures/failed')
-        self.dataset_dir = kwargs.get('dataset_dir', 'captures/dataset')
+        self.failed_dir = kwargs.get('failed_dir', 'python/data/captures/failed')
+        self.dataset_dir = kwargs.get('dataset_dir', 'python/data/captures/dataset')
         self.timeout_seconds = kwargs.get('timeout_seconds', 300.0)
     
     def annotate(self, request: AnnotationRequest) -> AnnotationResult:

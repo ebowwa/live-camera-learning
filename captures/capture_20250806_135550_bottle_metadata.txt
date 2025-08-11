@@ -1,5 +1,0 @@
-Timestamp: 20250806_135550
-Detections:
-  - bottle: 0.601
-    BBox: [608, 427, 30, 120]
-    Holding: True

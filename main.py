@@ -89,7 +89,7 @@ def run_intelligent_mode(args):
         def run_annotation():
             try:
                 print(f"Starting annotation interface at http://localhost:{args.annotation_port}")
-                app = create_annotation_app("models/knn_classifier.pkl")
+                app = create_annotation_app("python/models/knn_classifier.pkl")
                 result = app.launch(
                     share=False,
                     port=args.annotation_port,
@@ -139,7 +139,7 @@ def run_intelligent_mode(args):
         print("  ESC - Exit")
         
         print("\n🔄 Live Learning Active:")
-        print("  • Unknown objects → captures/failed/")
+        print("  • Unknown objects → python/data/captures/failed/")
         print("  • Annotate in browser → Model updates")
         print("  • System learns in real-time")
         print("="*60 + "\n")
@@ -301,7 +301,7 @@ Examples:
     parser.add_argument(
         '--model-path',
         type=str,
-        default='assets/yolo11n.onnx',
+        default='python/assets/yolo11n.onnx',
         help='Path to YOLO ONNX model'
     )
     
@@ -357,7 +357,7 @@ Examples:
     parser.add_argument(
         '--training-dir',
         type=str,
-        default='assets/images',
+        default='python/assets/images',
         help='Directory with training images for KNN'
     )
     

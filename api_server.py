@@ -53,7 +53,7 @@ class HealthResponse(BaseModel):
 class KNNAPIServer:
     """FastAPI server for KNN model inference."""
     
-    def __init__(self, model_path: str = "models/knn_classifier.npz"):
+    def __init__(self, model_path: str = "python/models/knn_classifier.npz"):
         self.model_path = model_path
         self.knn_classifier = None
         self.app = FastAPI(
@@ -279,7 +279,7 @@ class KNNAPIServer:
                 "new_threshold": threshold
             }
 
-def create_app(model_path: str = "models/knn_classifier.npz") -> FastAPI:
+def create_app(model_path: str = "python/models/knn_classifier.npz") -> FastAPI:
     """Create and configure the FastAPI app."""
     server = KNNAPIServer(model_path)
     return server.app
@@ -304,7 +304,7 @@ def main():
     parser.add_argument(
         "--model-path",
         type=str,
-        default="models/knn_classifier.npz",
+        default="python/models/knn_classifier.npz",
         help="Path to KNN model file"
     )
     parser.add_argument(

@@ -7,7 +7,7 @@ from python.edaxshifu.yolo_detector import YOLODetector
 
 def test_yolo_on_image():
     # Initialize detector
-    detector = YOLODetector("assets/yolo11n.onnx")
+    detector = YOLODetector("python/assets/yolo11n.onnx")
     
     # Create a test image (or load one)
     # For testing, let's create a simple colored rectangle
@@ -18,7 +18,7 @@ def test_yolo_on_image():
     
     # Try loading a real image if available
     try:
-        test_image = cv2.imread("assets/images/apple1.png")
+        test_image = cv2.imread("python/assets/images/apple1.png")
         if test_image is None:
             print("Using generated test image")
             test_image = np.ones((640, 640, 3), dtype=np.uint8) * 255

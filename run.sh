@@ -12,7 +12,7 @@ pkill -f "python.*annotate.py" 2>/dev/null
 sleep 1
 
 # Create necessary directories
-mkdir -p captures/failed captures/successful captures/processed captures/dataset models assets/images
+mkdir -p python/data/captures/failed python/data/captures/successful python/data/captures/processed python/data/captures/dataset python/models python/assets/images
 
 # Use first argument as URL, default to webcam
 URL="${1:-0}"

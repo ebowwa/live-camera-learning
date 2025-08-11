@@ -1,0 +1,21 @@
+{
+  "timestamp": "2025-08-06T14:56:06.350382",
+  "filepath": "python/data/intelligent_captures/failed/failed_20250806_145606_0.jpg",
+  "yolo_detections": [
+    {
+      "class_name": "unknown_object_0",
+      "confidence": 0.3,
+      "bbox": [
+        100,
+        100,
+        200,
+        200
+      ]
+    }
+  ],
+  "recognition": {
+    "label": "unknown",
+    "confidence": 0.2,
+    "is_known": false
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "timestamp": "2025-08-06T15:41:23.429836",
+  "filepath": "python/data/intelligent_captures/successful/success_20250806_154122_unknown_object.jpg",
+  "recognition": {
+    "label": "unknown_object",
+    "confidence": 0.6666666666666666,
+    "is_known": true,
+    "all_scores": {
+      "apple": 0.0,
+      "banana": 0.0,
+      "cat": 0.3333333333333333,
+      "test_banana": 0.0,
+      "unknown_object": 0.6666666666666666
+    }
+  },
+  "yolo_detections": [
+    {
+      "class_name": "toothbrush",
+      "confidence": 0.8029796481132507,
+      "bbox": [
+        797,
+        251,
+        201,
+        467
+      ]
+    }
+  ],
+  "stats": {
+    "frames_processed": 11692,
+    "triggers_fired": 25,
+    "successful_recognitions": 25,
+    "failed_recognitions": 0,
+    "gemini_queries": 0,
+    "knn_updates": 0
+  }
+}

@@ -17,8 +17,8 @@ def main():
     parser.add_argument(
         '--model-path',
         type=str,
-        default='models/knn_classifier.pkl',
-        help='Path to KNN model file (default: models/knn_classifier.pkl)'
+        default='python/models/knn_classifier.pkl',
+        help='Path to KNN model file (default: python/models/knn_classifier.pkl)'
     )
     
     parser.add_argument(
