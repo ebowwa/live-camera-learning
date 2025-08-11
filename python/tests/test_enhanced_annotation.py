@@ -7,7 +7,7 @@ import os
 import sys
 import logging
 
-from python.edaxshifu.annotation_interface import create_annotation_app
+from edaxshifu.annotation_interface import create_annotation_app
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

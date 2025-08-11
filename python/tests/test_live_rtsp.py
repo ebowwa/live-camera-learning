@@ -6,7 +6,7 @@ Test the live RTSP to annotation flow
 import sys
 import time
 import cv2
-from python.edaxshifu.intelligent_capture import IntelligentCaptureSystem
+from edaxshifu.intelligent_capture import IntelligentCaptureSystem
 
 def test_rtsp_flow():
     """Test RTSP capture creating real failed annotations."""

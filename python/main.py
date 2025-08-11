@@ -9,13 +9,13 @@ import sys
 import os
 import time
 import logging
-from python.edaxshifu.rtsp_stream import RTSPStream, RTSPViewer
-from python.edaxshifu.integrated_detector import IntegratedDetector, HandObjectTrigger
-from python.edaxshifu.intelligent_capture import IntelligentCaptureSystem
+from edaxshifu.rtsp_stream import RTSPStream, RTSPViewer
+from edaxshifu.integrated_detector import IntegratedDetector, HandObjectTrigger
+from edaxshifu.intelligent_capture import IntelligentCaptureSystem
 
 # Import hand detection (should work with Python 3.11)
 try:
-    from python.examples.hand_stream_viewer import HandStreamViewer, demo_gesture_handler
+    from examples.hand_stream_viewer import HandStreamViewer, demo_gesture_handler
     HAND_DETECTION_AVAILABLE = True
 except ImportError as e:
     HAND_DETECTION_AVAILABLE = False
@@ -82,7 +82,7 @@ def run_detection_mode(args):
 def run_intelligent_mode(args):
     """Run the full intelligent capture pipeline with KNN and annotation interface."""
     import threading
-    from python.edaxshifu.annotation_interface import create_annotation_app
+    from edaxshifu.annotation_interface import create_annotation_app
     
     # Start annotation interface in background thread if not disabled
     if not args.no_annotation:

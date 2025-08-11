@@ -11,7 +11,7 @@ import time
 from pathlib import Path
 import sys
 
-from python.edaxshifu.knn_classifier_online import KNNOnlineClassifier
+from edaxshifu.knn_classifier_online import KNNOnlineClassifier
 from typing import Optional
 
 

@@ -9,7 +9,7 @@ import numpy as np
 from pathlib import Path
 import sys
 
-from python.edaxshifu.hand_detector import HandDetector, HandDetection
+from edaxshifu.hand_detector import HandDetector, HandDetection
 
 
 def process_webcam():
