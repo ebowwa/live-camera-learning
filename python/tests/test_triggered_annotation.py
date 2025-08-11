@@ -9,11 +9,11 @@ import argparse
 from pathlib import Path
 import time
 
-from src.triggered_annotation import (
+from python.edaxshifu.triggered_annotation import (
     TriggeredAnnotationSystem,
     ConfidenceTrigger, UnknownObjectTrigger, NoveltyTrigger
 )
-from src.trigger_system import (
+from python.edaxshifu.trigger_system import (
     KeyboardTrigger, MotionTrigger, TimerTrigger,
     CompositeTrigger
 )

@@ -15,13 +15,13 @@ import threading
 import queue
 
 # Import existing systems
-from src.trigger_system import (
+from .trigger_system import (
     TriggerManager, TriggerEvent, TriggerType,
     KeyboardTrigger, MotionTrigger, TimerTrigger,
     ObjectDetectionTrigger, GestureTrigger, 
     AudioTrigger, CompositeTrigger, Trigger
 )
-from src.knn_classifier_online import KNNOnlineClassifier
+from .knn_classifier_online import KNNOnlineClassifier
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

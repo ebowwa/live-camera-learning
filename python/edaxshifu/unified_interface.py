@@ -21,10 +21,10 @@ from PIL import Image
 import threading
 import queue
 
-from src.intelligent_capture import IntelligentCaptureSystem
-from src.knn_classifier import AdaptiveKNNClassifier
-from src.annotators import AnnotatorFactory, AnnotationRequest
-from src.annotators.bbox_utils import draw_bounding_boxes, crop_object_from_bbox, crop_all_objects
+from .intelligent_capture import IntelligentCaptureSystem
+from .knn_classifier import AdaptiveKNNClassifier
+from .annotators import AnnotatorFactory, AnnotationRequest
+from .annotators.bbox_utils import draw_bounding_boxes, crop_object_from_bbox, crop_all_objects
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

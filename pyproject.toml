@@ -4,6 +4,10 @@ version = "0.1.0"
 description = "Intelligent Edge AI Camera System"
 readme = "readme.md"
 requires-python = "==3.11.*"
+
+[tool.setuptools]
+packages = ["python.edaxshifu"]
+package-dir = {"python.edaxshifu" = "python/edaxshifu"}
 dependencies = [
     "opencv-python>=4.8.0",
     "numpy>=1.21.0,<2.0.0",

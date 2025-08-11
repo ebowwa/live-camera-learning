@@ -7,10 +7,7 @@ import os
 import sys
 import logging
 
-# Add src directory to path
-sys.path.append('src')
-
-from src.annotation_interface import create_annotation_app
+from python.edaxshifu.annotation_interface import create_annotation_app
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

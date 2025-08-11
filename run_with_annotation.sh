@@ -34,7 +34,7 @@ trap cleanup INT TERM
 
 # Start the annotation interface in background
 echo "1. Starting annotation interface..."
-uv run python annotate.py &
+uv run python python/tests/annotate.py &
 ANNOTATION_PID=$!
 echo "   Annotation interface PID: $ANNOTATION_PID"
 echo "   Access at: http://localhost:7860"

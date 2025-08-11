@@ -16,7 +16,7 @@ def test_rtsp_capture():
     print("=" * 60)
     
     # Import the intelligent capture system
-    from src.intelligent_capture import IntelligentCaptureSystem
+    from python.edaxshifu.intelligent_capture import IntelligentCaptureSystem
     
     # Use webcam (0) for testing, but can be replaced with RTSP URL
     rtsp_url = "0"  # Change to RTSP URL like "rtsp://admin:admin@192.168.42.1:554/live"
@@ -59,7 +59,7 @@ def test_annotation_interface():
     print("ANNOTATION INTERFACE TEST")
     print("=" * 60)
     
-    from src.annotation_interface import AnnotationInterface
+    from python.edaxshifu.annotation_interface import AnnotationInterface
     
     # Check if there are failed captures to annotate
     failed_dir = Path("captures/failed")
