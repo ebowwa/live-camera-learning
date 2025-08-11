@@ -34,7 +34,7 @@ trap cleanup INT TERM
 
 # Start the annotation interface in background
 echo "1. Starting annotation interface..."
-uv run python python/tests/annotate.py &
+uv run python tests/annotate.py &
 ANNOTATION_PID=$!
 echo "   Annotation interface PID: $ANNOTATION_PID"
 echo "   Access at: http://localhost:7860"
@@ -53,9 +53,9 @@ echo "   - ESC to exit"
 echo ""
 
 if [ "$RTSP_URL" == "0" ]; then
-    uv run python python/main.py --mode intelligent --url 0 &
+    uv run python main.py --mode intelligent --url 0 &
 else
-    uv run python python/main.py --mode intelligent --url "$RTSP_URL" &
+    uv run python main.py --mode intelligent --url "$RTSP_URL" &
 fi
 CAPTURE_PID=$!
 echo "   Capture system PID: $CAPTURE_PID"

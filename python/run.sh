@@ -12,7 +12,7 @@ pkill -f "python.*annotate.py" 2>/dev/null
 sleep 1
 
 # Create necessary directories
-mkdir -p python/data/captures/failed python/data/captures/successful python/data/captures/processed python/data/captures/dataset python/models python/assets/images
+mkdir -p data/captures/failed data/captures/successful data/captures/processed data/captures/dataset models assets/images
 
 # Use first argument as URL, default to webcam
 URL="${1:-0}"
@@ -24,4 +24,4 @@ echo ""
 
 # Run the integrated system
 echo "Starting complete system..."
-uv run python python/main.py --mode intelligent --url "$URL"
+uv run python main.py --mode intelligent --url "$URL"
