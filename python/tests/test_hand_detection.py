@@ -7,7 +7,7 @@ Tests the HandDetector class without requiring a camera.
 import numpy as np
 import cv2
 import sys
-from src.hand_detector import HandDetector
+from python.edaxshifu.hand_detector import HandDetector
 
 
 def test_hand_detector_initialization():
@@ -97,7 +97,7 @@ def test_hand_detection_methods():
     print("\nTesting HandDetection methods...")
     
     try:
-        from src.hand_detector import HandDetection, HandLandmark
+        from python.edaxshifu.hand_detector import HandDetection, HandLandmark
         
         # Create mock landmarks
         landmarks = [
