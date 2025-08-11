@@ -27,6 +27,17 @@ from src.annotators import AnnotatorFactory, AnnotationRequest
 from src.annotators.bbox_utils import draw_bounding_boxes, crop_object_from_bbox, crop_all_objects
 from src.hand_detector import HandDetector
 
+# Import distributed training (optional)
+try:
+    from src.distributed import MODAL_AVAILABLE, is_distributed_available
+    from src.distributed.client import DistributedTrainingClient
+    from src.distributed.modal_config import ModalConfig
+    DISTRIBUTED_AVAILABLE = is_distributed_available()
+except ImportError:
+    DISTRIBUTED_AVAILABLE = False
+    DistributedTrainingClient = None
+    ModalConfig = None
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -70,7 +81,9 @@ class UnifiedEdaxShifu:
             'annotations': 0,
             'ai_annotations': 0,
             'hands_detected': 0,
-            'gestures_recognized': 0
+            'gestures_recognized': 0,
+            'distributed_submissions': 0,
+            'model_syncs': 0
         }
         
         # Initialize hand detector
@@ -102,6 +115,20 @@ class UnifiedEdaxShifu:
         }
         
         logger.info("Detection and trigger systems initialized")
+        
+        # Initialize distributed training client (optional)
+        self.distributed_client = None
+        self.distributed_enabled = False
+        if DISTRIBUTED_AVAILABLE:
+            try:
+                config = ModalConfig.from_env()
+                self.distributed_client = DistributedTrainingClient(
+                    config=config,
+                    local_knn=self.system.knn
+                )
+                logger.info("Distributed training client initialized")
+            except Exception as e:
+                logger.warning(f"Failed to initialize distributed training: {e}")
         
         # Initialize Gemini annotator
         self.gemini_annotator = None
@@ -383,9 +410,25 @@ class UnifiedEdaxShifu:
         # Force reload to ensure the model is updated
         self.system.reload_model()
         
+        # Submit to distributed training if enabled
+        distributed_info = ""
+        if self.distributed_enabled and self.distributed_client:
+            try:
+                success = self.distributed_client.submit_annotation(
+                    image=img_array,
+                    label=label,
+                    confidence=1.0,
+                    metadata={"source": "manual_teaching"}
+                )
+                if success:
+                    self.stats['distributed_submissions'] += 1
+                    distributed_info = " 🌐 Shared"
+            except Exception as e:
+                logger.error(f"Failed to submit to distributed training: {e}")
+        
         classes = self.system.knn.get_known_classes()
         crop_info = f" ({cropped_objects} cropped objects)" if cropped_objects > 0 else ""
-        return f"✅ Taught: {label}{crop_info} (Total: {len(classes)} classes: {', '.join(classes)})"
+        return f"✅ Taught: {label}{crop_info}{distributed_info} (Total: {len(classes)} classes: {', '.join(classes)})"
     
     def get_last_capture_as_pil(self) -> Optional[Image.Image]:
         """Get the last capture as a PIL image for the teaching interface."""
@@ -396,6 +439,77 @@ class UnifiedEdaxShifu:
         img_rgb = cv2.cvtColor(self.last_capture, cv2.COLOR_BGR2RGB)
         return Image.fromarray(img_rgb)
     
+    def toggle_distributed_training(self, enable: bool) -> str:
+        """Enable or disable distributed training."""
+        if not DISTRIBUTED_AVAILABLE:
+            return "❌ Distributed training not available (Modal not installed)"
+        
+        if enable:
+            if not self.distributed_client:
+                try:
+                    config = ModalConfig.from_env()
+                    self.distributed_client = DistributedTrainingClient(
+                        config=config,
+                        local_knn=self.system.knn
+                    )
+                except Exception as e:
+                    return f"❌ Failed to initialize: {e}"
+            
+            self.distributed_enabled = True
+            # Try initial sync
+            if self.distributed_client:
+                self.distributed_client.flush_pending_annotations()
+            return "✅ Distributed training enabled"
+        else:
+            self.distributed_enabled = False
+            if self.distributed_client:
+                self.distributed_client.disconnect()
+            return "⏹ Distributed training disabled"
+    
+    def sync_distributed_model(self) -> str:
+        """Manually sync with distributed model."""
+        if not self.distributed_enabled or not self.distributed_client:
+            return "❌ Distributed training not enabled"
+        
+        try:
+            success = self.distributed_client.sync_model(force=True)
+            if success:
+                self.stats['model_syncs'] += 1
+                # Reload local model to reflect changes
+                self.system.reload_model()
+                return f"✅ Model synced successfully (sync #{self.stats['model_syncs']})"
+            else:
+                return "⚠️ No updates available"
+        except Exception as e:
+            return f"❌ Sync failed: {e}"
+    
+    def get_distributed_stats(self) -> str:
+        """Get distributed training statistics."""
+        if not self.distributed_enabled or not self.distributed_client:
+            return "Distributed training not enabled"
+        
+        try:
+            user_stats = self.distributed_client.get_contribution_stats()
+            global_stats = self.distributed_client.get_global_stats()
+            
+            return f"""🌐 Distributed Training Stats:
+            
+**Your Contributions:**
+• User ID: {user_stats.get('user_id', 'Unknown')}
+• Contributions: {user_stats.get('contributions', 0)}
+• Pending: {user_stats.get('pending', 0)}
+• Last sync: {user_stats.get('last_sync', 'Never')}
+
+**Global Network:**
+• Total users: {global_stats.get('total_users', 0)}
+• Total annotations: {global_stats.get('total_annotations', 0)}
+• Model samples: {global_stats.get('model_samples', 0)}
+• Model classes: {global_stats.get('model_classes', 0)}
+• Last aggregation: {global_stats.get('last_aggregation', 'Unknown')}
+"""
+        except Exception as e:
+            return f"Failed to get stats: {e}"
+    
     def get_stats(self) -> str:
         """Get current statistics."""
         classes = self.system.knn.get_known_classes()
@@ -404,6 +518,14 @@ class UnifiedEdaxShifu:
         # Show active detection and triggers
         active_detection = [name.upper() for name, enabled in self.detection_modes.items() if enabled]
         active_triggers = [name.replace('_', ' ').title() for name, enabled in self.triggers.items() if enabled]
+        
+        # Distributed training status
+        distributed_status = ""
+        if DISTRIBUTED_AVAILABLE:
+            if self.distributed_enabled and self.distributed_client:
+                distributed_status = f"\n• 🌐 Distributed: ON | Shared: {self.stats['distributed_submissions']} | Syncs: {self.stats['model_syncs']}"
+            else:
+                distributed_status = "\n• 🌐 Distributed: OFF (available)"
         
         return f"""📊 Statistics:
 • Detection: {', '.join(active_detection) if active_detection else 'None'}
@@ -415,7 +537,7 @@ class UnifiedEdaxShifu:
 • AI annotations: {self.stats['ai_annotations']}
 • AI status: {ai_status}
 • Hands detected: {self.stats['hands_detected']}
-• Gestures: {self.stats['gestures_recognized']}
+• Gestures: {self.stats['gestures_recognized']}{distributed_status}
 • Classes: {', '.join(classes[:5])}{'...' if len(classes) > 5 else ''}"""
     
     def create_interface(self) -> gr.Blocks:
@@ -535,6 +657,37 @@ class UnifiedEdaxShifu:
                             label="Status",
                             interactive=False
                         )
+                    
+                    gr.Markdown("---")
+                    
+                    # Distributed Training Controls (if available)
+                    if DISTRIBUTED_AVAILABLE:
+                        with gr.Accordion("🌐 Distributed Training", open=False):
+                            gr.Markdown("Share your training data with the network")
+                            
+                            with gr.Row():
+                                distributed_toggle = gr.Checkbox(
+                                    label="Enable Distributed Training",
+                                    value=self.distributed_enabled,
+                                    info="Share annotations with network"
+                                )
+                                sync_btn = gr.Button("🔄 Sync Model", size="sm")
+                            
+                            distributed_status = gr.Textbox(
+                                label="Network Status",
+                                value="Not connected",
+                                interactive=False,
+                                lines=2
+                            )
+                            
+                            distributed_stats = gr.Textbox(
+                                label="Network Statistics",
+                                value=self.get_distributed_stats() if self.distributed_enabled else "Disabled",
+                                interactive=False,
+                                lines=8
+                            )
+                            
+                            refresh_distributed = gr.Button("🔄 Refresh Network Stats", size="sm")
                     
                     gr.Markdown("---")
                     
@@ -779,6 +932,36 @@ class UnifiedEdaxShifu:
                 inputs=[api_key_input],
                 outputs=[api_status, teach_status, stats_display]
             )
+            
+            # Distributed training event handlers (if available)
+            if DISTRIBUTED_AVAILABLE:
+                # Toggle distributed training
+                def toggle_distributed(enable):
+                    status = self.toggle_distributed_training(enable)
+                    stats = self.get_distributed_stats() if enable else "Disabled"
+                    return status, stats, self.get_stats()
+                
+                distributed_toggle.change(
+                    toggle_distributed,
+                    inputs=[distributed_toggle],
+                    outputs=[distributed_status, distributed_stats, stats_display]
+                )
+                
+                # Sync model button
+                def sync_model():
+                    status = self.sync_distributed_model()
+                    return status, self.get_distributed_stats(), self.get_stats()
+                
+                sync_btn.click(
+                    sync_model,
+                    outputs=[distributed_status, distributed_stats, stats_display]
+                )
+                
+                # Refresh distributed stats
+                refresh_distributed.click(
+                    lambda: (self.get_distributed_stats(), self.get_stats()),
+                    outputs=[distributed_stats, stats_display]
+                )
             
             # Load initial stats
             interface.load(
