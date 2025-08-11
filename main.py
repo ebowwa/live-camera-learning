@@ -15,7 +15,7 @@ from src.intelligent_capture import IntelligentCaptureSystem
 
 # Import hand detection (should work with Python 3.11)
 try:
-    from src.hand_stream_viewer import HandStreamViewer, demo_gesture_handler
+    from examples.hand_stream_viewer import HandStreamViewer, demo_gesture_handler
     HAND_DETECTION_AVAILABLE = True
 except ImportError as e:
     HAND_DETECTION_AVAILABLE = False

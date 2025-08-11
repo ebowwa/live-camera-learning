@@ -188,7 +188,6 @@ class HandStreamViewer:
             logger.error("Failed to connect to stream")
             return
             
-        self.stream.start_time = time.time()
         fps = 0
         frame_time = time.time()
         
