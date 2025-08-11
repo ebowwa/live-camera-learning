@@ -104,7 +104,7 @@ def run_rtsp_system(rtsp_url, headless=False, skip_annotation=False):
         # Start intelligent capture system
         print("\n2. Starting intelligent capture system...")
         capture_cmd = [
-            sys.executable, "main.py",
+            sys.executable, "python/main.py",
             "--mode", "intelligent",
             "--url", rtsp_url,
             "--model-path", "python/assets/yolo11n.onnx",

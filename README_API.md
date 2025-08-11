@@ -22,7 +22,7 @@ pip install -r requirements_api.txt
 ### 2. Start the API Server
 
 ```bash
-python api_server.py
+cd python && python api_server.py
 ```
 
 The server will start on `http://0.0.0.0:8000` by default.
@@ -124,7 +124,7 @@ fetch('http://localhost:8000/predict/upload', {
 ## Command Line Options
 
 ```bash
-python api_server.py --help
+cd python && python api_server.py --help
 ```
 
 Options:
