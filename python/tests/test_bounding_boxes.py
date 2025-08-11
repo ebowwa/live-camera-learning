@@ -7,8 +7,8 @@ import os
 import numpy as np
 import cv2
 from PIL import Image
-from src.annotators import AnnotatorFactory, AnnotationRequest
-from src.annotators.bbox_utils import draw_bounding_boxes, crop_object_from_bbox
+from python.edaxshifu.annotators import AnnotatorFactory, AnnotationRequest
+from python.edaxshifu.annotators.bbox_utils import draw_bounding_boxes, crop_object_from_bbox
 
 def test_bounding_boxes():
     """Test bounding box detection and visualization."""

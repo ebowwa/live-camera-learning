@@ -2,8 +2,8 @@ import cv2
 import time
 from typing import Optional, Callable, List
 import logging
-from src.rtsp_stream import RTSPStream
-from src.hand_detector import HandDetector, HandDetection
+from python.edaxshifu.rtsp_stream import RTSPStream
+from python.edaxshifu.hand_detector import HandDetector, HandDetection
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

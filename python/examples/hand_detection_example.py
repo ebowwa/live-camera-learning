@@ -9,10 +9,7 @@ import numpy as np
 from pathlib import Path
 import sys
 
-# Add parent directory to path to import our modules
-sys.path.append(str(Path(__file__).parent.parent))
-
-from src.hand_detector import HandDetector, HandDetection
+from python.edaxshifu.hand_detector import HandDetector, HandDetection
 
 
 def process_webcam():

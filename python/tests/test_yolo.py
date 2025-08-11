@@ -3,7 +3,7 @@
 
 import cv2
 import numpy as np
-from src.yolo_detector import YOLODetector
+from python.edaxshifu.yolo_detector import YOLODetector
 
 def test_yolo_on_image():
     # Initialize detector

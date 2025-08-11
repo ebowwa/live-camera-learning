@@ -21,9 +21,7 @@ import cv2
 import numpy as np
 from PIL import Image
 
-sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
-
-from src.knn_classifier import AdaptiveKNNClassifier, Recognition
+from python.edaxshifu.knn_classifier import AdaptiveKNNClassifier, Recognition
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

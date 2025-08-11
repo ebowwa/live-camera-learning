@@ -3,7 +3,7 @@ Enhanced KNN Classifier with Online Learning capabilities.
 Extends the base KNN classifier with interactive learning during inference.
 """
 
-from src.knn_classifier import KNNObjectClassifier, Recognition
+from .knn_classifier import KNNObjectClassifier, Recognition
 import numpy as np
 from typing import Optional, Tuple, Dict, Any
 import logging
