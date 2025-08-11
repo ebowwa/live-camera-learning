@@ -12,7 +12,7 @@ from PIL import Image
 import io
 import os
 
-from python.edaxshifu.knn_classifier import KNNObjectClassifier, Recognition
+from edaxshifu.knn_classifier import KNNObjectClassifier, Recognition
 from .modal_config import ModalConfig
 
 logger = logging.getLogger(__name__)

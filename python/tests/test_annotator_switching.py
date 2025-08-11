@@ -5,7 +5,7 @@ Test script to demonstrate annotator switching functionality.
 
 import os
 import numpy as np
-from python.edaxshifu.annotators import AnnotatorFactory, AnnotationRequest
+from edaxshifu.annotators import AnnotatorFactory, AnnotationRequest
 
 def test_annotator_switching():
     """Test different annotator modes."""
