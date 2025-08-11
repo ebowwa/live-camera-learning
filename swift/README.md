@@ -4,13 +4,14 @@ This directory contains Swift implementations of the EdaxShifu system.
 
 ## LiveLearningCamera iOS App
 
-The `LiveLearningCamera/` directory contains a complete iOS app built with SwiftUI and Xcode.
+The `LiveLearningCamera/` directory contains a complete iOS app built with SwiftUI and Xcode for native on-device machine learning.
 
 ### Features
-- SwiftUI-based iOS application
+- SwiftUI-based iOS application with native ML capabilities
 - Xcode project with unit and UI tests
-- Ready for camera integration
-- Designed to integrate with Python backend API
+- Core ML integration for on-device inference
+- Vision framework for real-time object detection
+- Independent architecture - no external API dependencies
 
 ### Project Structure
 ```
@@ -31,21 +32,22 @@ swift/
 - **Framework**: SwiftUI
 - **Bundle ID**: ebowwa.LiveLearningCamera
 
-### Integration with Python Backend
-The iOS app is designed to communicate with the Python backend via REST API:
-- Image prediction endpoints (`/predict`, `/predict_file`)
-- Model management (`/model/reload`, `/model/confidence`)
-- Statistics and monitoring (`/stats`)
-- Distributed learning integration via Modal.com
+### Native iOS ML Architecture
+The iOS app implements completely independent on-device machine learning:
+- **Core ML**: Native iOS model inference with optimized performance
+- **Vision Framework**: Real-time object detection and image analysis
+- **AVFoundation**: Direct camera capture and processing
+- **On-Device Training**: Local model adaptation without external dependencies
 
 ### Development Setup
 1. Open `LiveLearningCamera.xcodeproj` in Xcode
 2. Build and run on iOS Simulator or device
-3. Ensure Python backend is running for API integration
+3. All ML processing runs natively on-device - no external dependencies required
 
-### Future Enhancements
-- AVFoundation camera capture
-- Real-time object detection display
-- Annotation interface for teaching new objects
-- Core ML integration for offline inference
-- Federated learning participation
+### Implementation Roadmap
+- **Phase 1**: AVFoundation camera capture and real-time preview
+- **Phase 2**: Core ML model integration for object detection
+- **Phase 3**: Vision framework for real-time inference and bounding boxes
+- **Phase 4**: On-device learning and model adaptation
+- **Phase 5**: Local annotation interface for teaching new objects
+- **Phase 6**: Model export/import for sharing between devices
